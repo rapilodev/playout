@@ -1,0 +1,7 @@
+etc/init/
+etc/playout/
+etc/systemd/system
+var/log/playout
+var/lib/playout/
+var/run/playout/
+usr/share/playout/

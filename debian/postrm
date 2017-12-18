@@ -1,0 +1,47 @@
+#! /bin/sh
+
+
+if [ "$1" = "purge" ] ; then
+    if [ -e /etc/playout/playout.conf ]; then
+        rm /etc/playout/playout.conf
+    fi
+
+    if [ -e /etc/init/playout.conf ]; then
+        rm /etc/init/playout.conf
+    fi
+
+    if [ -e /etc/logrotate.d/playout ]; then
+        rm /etc/logrotate.d/playout
+    fi
+
+    if [ -d /var/lib/playout/ ]; then
+        rm -r /var/lib/playout/
+    fi
+
+    if [ -d /var/run/playout/ ]; then
+        rm -r /var/run/playout/
+    fi
+
+    if [ -d /var/log/playout/ ]; then
+        rm -r /var/log/playout/
+    fi
+
+    if [ -e /var/log/upstart/playout.log ]; then
+        rm -r /var/log/upstart/playout.log
+    fi
+
+    if getent passwd playout >/dev/null; then
+        if [ -x /usr/sbin/deluser ]; then
+            deluser --system playout || echo "Could not remove user 'playout'."
+        fi
+    fi
+
+    if getent group playout >/dev/null; then
+        if [ -x /usr/sbin/delgroup ]; then
+            delgroup --system playout || echo "Could not remove group 'playout'."
+        fi
+    fi
+fi
+
+#DEBHELPER#
+exit 0;

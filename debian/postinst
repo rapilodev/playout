@@ -1,0 +1,66 @@
+#!/bin/bash
+
+isUpstart() {
+    /sbin/init --version 2>/dev/null | grep -q 'upstart'
+    #echo "result=$?"
+    if [ "$?" = "0" ]; then
+        return 0
+    else 
+        return 1
+    fi
+}
+
+isSystemd() {
+    /bin/systemctl 2>/dev/null | grep -q '\-\.mount'
+    #echo "result=$?"
+    if [ "$?" = "0" ]; then
+        return 0
+    else 
+        return 1
+    fi
+}
+
+
+if ! getent group playout >/dev/null; then
+	addgroup --system playout
+fi
+
+if ! getent passwd playout >/dev/null; then
+	adduser --system --ingroup playout --home /var/lib/playout playout
+fi
+
+addgroup playout pulse
+addgroup playout pulse-access
+addgroup playout audio
+addgroup playout playout
+
+if [ -d /var/lib/playout/ ]; then
+    chown playout:playout /var/lib/playout/
+    chmod 0750 /var/lib/playout/
+fi
+
+if [ -d /var/run/playout/ ]; then
+    chown playout:playout /var/run/playout/
+    chmod 0775 /var/run/playout/
+fi
+
+if [ -d /var/log/playout/ ]; then
+    chown playout:playout /var/log/playout/
+    chmod 0775 /var/log/playout/
+fi
+
+[ -f /etc/playout/playout.conf ] && chgrp playout /etc/playout/playout.conf
+[ -f /etc/logrotate/playout ] && chgrp playout /etc/logrotate.d/playout
+[ -f /etc/init/playout.conf ] && chgrp playout /etc/init/playout.conf	
+
+if isUpstart; then
+	start playout
+fi
+
+if isSystemd; then
+	systemctl start playout
+	systemctl enable playout
+fi
+
+#DEBHELPER#
+exit 0

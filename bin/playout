@@ -1,0 +1,180 @@
+#!/usr/bin/perl
+
+use utf8;
+use Data::Dumper;
+use Config::General;
+use Getopt::Long qw(:config bundling);
+
+use Playout::Log;
+use Playout::Config;
+use Playout::MediaFiles;
+use Playout::Time;
+
+my $help    = undef;
+my $verbose = 0;
+GetOptions(
+    "h|help"    => \$help,
+    "verbose=i" => \$verbose
+);
+
+# read configuration
+our ( $config, $error ) = updateConfig();
+MediaFiles::init();
+
+if ( defined $help ) {
+    print usage();
+    exit 0;
+}
+exit if ( $error > 0 );
+
+my $query = join( ' ', @ARGV );
+$query =~ s/^\s+//g;
+$query =~ s/\s+$//g;
+$query = quotemeta($query);
+print Log::info("query='$query'") if Log::getLevel() > 1;
+query($query);
+
+sub query {
+    my $query = shift;
+
+    my $cache  = MediaFiles::getCache();
+    my $result = {};
+
+    # get audio files from cache
+    for my $file ( sort keys %$cache ) {
+        next if $file eq 'date';
+        next if $file eq 'info';
+        my $start    = $cache->{$file}->{start};
+        my $duration = 0;
+        $duration = $cache->{$file}->{duration} if defined $cache->{$file}->{duration};
+
+        # get title from info files
+        my $title = '';
+        if ( defined $cache->{info}->{$start} ) {
+            my @keys = ( keys %{ $cache->{info}->{$start} } );
+            if ( @keys > 1 ) {
+                print STDERR "WARN: multiple info files found!\n";
+            }
+            if ( @keys == 1 ) {
+                my $key = $keys[0];
+                $title = $cache->{info}->{$start}->{$key}->{name};
+                $title =~ s/ - \d+$//;
+            }
+        }
+
+        # filter
+        my $line = $start . " " . $file . " " . ( $title || '' ) . " " . Time::secondsToTime($duration);
+        next if ( $query =~ /\S/ ) && ( $line !~ /$query/i );
+
+        my $date = substr( $start, 0, 10 );
+
+        if ( defined $result->{$date}->{$start} ) {
+            print STDERR "WARN: more than one files at $start\n";
+            print "  '$file'\n";
+            print "  '" . $result->{$date}->{$start}->{file} . "'\n";
+        }
+
+        my $rmsLeft  = undef;
+        my $rmsRight = undef;
+        $rmsLeft    = $cache->{$file}->{rms_left}    if defined $cache->{$file}->{rms_left};
+        $rmsRight   = $cache->{$file}->{rms_right}   if defined $cache->{$file}->{rms_right};
+        $replayGain = $cache->{$file}->{replay_gain} if defined $cache->{$file}->{replay_gain};
+
+        $result->{$date}->{$start} = {
+            start       => $start,
+            file        => $file,
+            duration    => $duration,
+            title       => $title,
+            rmsLeft     => $rmsLeft,
+            rmsRight    => $rmsRight,
+            replay_gain => $replayGain
+        };
+    }
+
+    for my $date ( keys %{ $cache->{info} } ) {
+        my $infoFile = $cache->{info}->{$date};
+        for my $path ( keys %$infoFile ) {
+            my $info  = $infoFile->{$path};
+            my $title = $info->{name};
+            my $start = Time::pathToDatetime( $config->{mediaDir}, $path );
+
+            my $line = $start . " " . ( $title || '' );
+            next if ( $query =~ /\S/ ) && ( $line !~ /$query/i );
+            my $date = substr( $start, 0, 10 );
+            $result->{$date}->{$start}->{title} = $title;
+        }
+    }
+
+    # get info files from cache
+    for my $date ( sort keys %$result ) {
+        my $eventsByDate = $result->{$date};
+
+        for my $start ( sort keys %$eventsByDate ) {
+            my $info = $eventsByDate->{$start};
+            my $time = substr( $start, 11 );
+
+            printf( "%10s %s\n", $date, $time ) if $info->{title} eq '';
+            printf( "%10s %s  \"%s\"\n", $date, $time, $info->{title} ) if $info->{title} ne '';
+            my $lines = 1;
+
+            if ( defined $info->{file} ) {
+                printf( "%20s %-10s \"%s\"\n", '', "file", $info->{file} );
+                $lines++;
+            }
+            if ( defined $info->{duration} ) {
+                printf( "%20s %-10s %s\n", '', "duration", Time::secondsToTime( $info->{duration} ) );
+                $lines++;
+            }
+            my $replayGain='';
+            $replayGain=sprintf(", replayGain:%s", $info->{replayGain} ) if defined $info->{replayGain};
+            if ( ( defined $info->{rmsLeft} ) && ( defined $info->{rmsRight} ) ) {
+                printf( "%20s %-10s left %s dB, right %s dB%s\n", '', "RMS", $info->{rmsLeft}, $info->{rmsRight}, $replayGain);
+                $lines++;
+            }
+            print "\n" if $lines > 1;
+        }
+    }
+}
+
+sub updateConfig {
+    return unless Config::hasChanged();
+
+    $config = Config::update();
+    $config->{verboseLevel} = $verbose;
+    my $error = Config::check();
+
+    # return on errors
+    return $config, $error unless $error == 0;
+
+    Log::setLevel( $config->{verboseLevel} );
+    MediaFiles::setMediaDir( $config->{mediaDir} );
+    MediaFiles::setCacheFile( $config->{mediaDir} . '/playout.dat' );
+
+    Time::setTimeZone( $config->{timeZone} );
+
+    # add checks
+    $error += MediaFiles::checkMediaDir();
+    return $config, $error;
+}
+
+sub usage {
+    my $database = $config->{mediaDir} . '/playout.dat';
+    $database =~ s/\/+/\//g;
+
+    print qq{
+query playout entries
+
+Usage: playout [OPTION..] <query>
+
+DESCRIPTION:
+playout will list all files matching to the <query>.
+Read "man playout" for configuration.
+To reset the database stop playout, remove "$database" and start playout service. 
+
+OPTION:
+     <query>           query for a part of the title or the date.
+  -v --verbose LEVEL   set verbose level [0..5]
+  -h --help            help
+  
+};
+}

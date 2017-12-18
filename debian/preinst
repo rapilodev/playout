@@ -1,0 +1,39 @@
+#! /bin/sh -e
+
+isUpstart() {
+    /sbin/init --version 2>/dev/null | grep -q 'upstart'
+    #echo "result=$?"
+    if [ "$?" = "0" ]; then
+        return 0
+    else 
+        return 1
+    fi
+}
+
+isSystemd() {
+    /bin/systemctl 2>/dev/null | grep -q '\-\.mount'
+    #echo "result=$?"
+    if [ "$?" = "0" ]; then
+        return 0
+    else 
+        return 1
+    fi
+}
+
+if isUpstart; then
+	PID=$(status "playout" 2>/dev/null | awk '/[0-9]$/ { print $NF }')
+	[ -z "$PID" ] || stop playout || echo could not stop playout
+    PID=$(status "playout" 2>/dev/null | awk '/[0-9]$/ { print $NF }')
+    [ -z "$PID" ] || kill -HUP $PID
+fi
+
+if isSystemd; then
+	if systemctl is-active playout; then
+    	systemctl stop playout
+    fi
+fi
+
+#DEBHELPER#
+exit 0
+
+

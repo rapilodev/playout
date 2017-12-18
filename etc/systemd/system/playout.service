@@ -1,0 +1,17 @@
+[Unit]
+Description=playout
+
+[Service]
+User=playout
+Group=audiostream
+Type=simple
+ExecStart=/usr/bin/playout.pl --daemon
+Restart=always
+TimeoutSec=infinity
+TimeoutStopSec=1s
+RuntimeDirectory=playout
+PIDFile=/var/run/playout/playout.pid
+
+[Install]
+WantedBy=multi-user.target
+

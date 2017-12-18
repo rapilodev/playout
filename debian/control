@@ -1,0 +1,42 @@
+Source: playout
+Section: sound
+Priority: optional
+Maintainer: Milan Chrobok <mc@radiopiloten.de>
+Build-Depends: debhelper (>= 8)
+Build-Depends-Indep: perl
+Standards-Version: 3.9.5
+Homepage: https://launchpad.net/~mc-1/+archive/playout
+
+Package: playout
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends},
+ libconfig-general-perl,
+ libdate-calc-perl,
+ libdatetime-format-iso8601-perl,
+ libdatetime-perl,
+ libfile-basedir-perl,
+ libfile-path-perl,
+ libgetopt-long-descriptive-perl,
+ libjson-perl,
+ libtime-hires-perl,
+ libxml-libxml-simple-perl,
+ libwww-perl,
+ libsox-fmt-mp3,
+ mp3info,
+ mp3splt,
+ upstart,
+ sox
+Recommends: rms, playout-liquidsoap, pulseaudio, vlc-nox
+Description: schedule mp3 playout
+ This program starts playing out audio files from a given directory.
+ You can control the start date and time by putting an audio file into a directory at /<media_path>/yyyy/mm/dd/hh-mm/.
+ The first matching file found in a directory will be played at the given time.
+ Media directory will be frequently scanned for new files.
+ You can configure media path and further settings at /etc/playout/playout.conf .
+ This package comes with an upstart job at /etc/init/playout.conf run as service as user playout.
+ Logs will be written to /var/log/playout/playout.log and rotated by /etc/logrotate.d/playout
+ By default playout uses cvlc to play first file found in media directory (interface=simple).
+ Optionally liquidsoap can be used for playout (to stream or soundcard)
+ In case of unexpected process or system restart the current mp3 file will be cutted by to continue from the current position in time.
+ The schedule metadata can be uploaded to an given URL for further processing.
+ Optional use of rms package to parse exact duration and plot and upload audio RMS plots.

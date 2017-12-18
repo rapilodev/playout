@@ -1,0 +1,120 @@
+playout (0.04.0069) xenial; urgency=low
+  * playout_synch.pl handle broken image downloads
+ -- Milan Chrobok <mc@radiopiloten.de>  Sun, 05 Nov 2017 12:00:00 +0200
+
+playout (0.04.0068) xenial; urgency=low
+  * fix peak.wav 
+ -- Milan Chrobok <mc@radiopiloten.de>  Sun, 05 Nov 2017 12:00:00 +0200
+
+playout (0.04.0067) xenial; urgency=low
+  * add systemd support 
+ -- Milan Chrobok <mc@radiopiloten.de>  Sun, 02 Apr 2017 12:00:00 +0200
+
+playout (0.04.0062) trusty; urgency=low
+  * add file download from server by playout_synch.pl 
+ -- Milan Chrobok <mc@radiopiloten.de>  Sun, 12 Mar 2017 12:00:00 +0200
+
+playout (0.04.0061) trusty; urgency=low
+  * add replay gain to upload 
+ -- Milan Chrobok <mc@radiopiloten.de>  Sat, 31 Dec 2016 12:00:00 +0200
+
+playout (0.04.0058) trusty; urgency=low
+  * play 22khz peak some seconds before start to switch off any silence detection
+ -- Milan Chrobok <mc@radiopiloten.de>  Fri, 30 Dec 2016 12:00:00 +0200
+
+playout (0.04.0057) trusty; urgency=low
+  * add replay gain
+  * do not update file if modified in the last 3 seconds
+ -- Milan Chrobok <mc@radiopiloten.de>  Fri, 30 Dec 2016 12:00:00 +0200
+
+playout (0.04.0056) trusty; urgency=low
+  * fix short scan, resort files on scan
+ -- Milan Chrobok <mc@radiopiloten.de>  Tue, 13 Sep 2016 12:00:00 +0200
+
+playout (0.04.0052) trusty; urgency=low
+  * abort scan of future schedules
+ -- Milan Chrobok <mc@radiopiloten.de>  Sun, 11 Sep 2016 12:00:00 +0200
+
+playout (0.04.0051) trusty; urgency=low
+  * stop long scan to switch to new source 
+ -- Milan Chrobok <mc@radiopiloten.de>  Sun, 11 Sep 2016 12:00:00 +0200
+
+playout (0.04.0050) trusty; urgency=low
+  * adopt debug levels
+ -- Milan Chrobok <mc@radiopiloten.de>  Sun, 19 Jun 2016 20:12:09 +0200
+
+playout (0.04.0049) trusty; urgency=low
+  * add .stream files support
+  * add optional liquidsoap interface
+ -- Milan Chrobok <mc@radiopiloten.de>  Sat, 18 Jun 2016 20:52:09 +0200
+
+playout (0.04.0047) trusty; urgency=low
+  * fix playout search and creating directories
+ -- Milan Chrobok <mc@radiopiloten.de>  Sun, 01 May 2016 20:52:09 +0200
+
+playout (0.04.0046) trusty; urgency=low
+  * use utf-8 encoding on upload
+ -- Milan Chrobok <mc@radiopiloten.de>  Thu, 21 Apr 2016 20:52:09 +0200
+
+playout (0.04.0045) trusty; urgency=low
+  * add rms_left, rms_right and rms_image to upload
+ -- Milan Chrobok <mc@radiopiloten.de>  Wed, 20 Apr 2016 20:52:09 +0200
+
+playout (0.04.0043) trusty; urgency=low
+  * improve query logs for playout
+ -- Milan Chrobok <mc@radiopiloten.de>  Wed, 20 Apr 2016 20:34:09 +0200
+
+playout (0.04.0039) trusty; urgency=low
+  * use camel case for config values
+  * set file permissions for created files and directories
+ -- Milan Chrobok <mc@radiopiloten.de>  Wed, 20 Apr 2016 19:34:09 +0200
+
+playout (0.04.0038) trusty; urgency=low
+  * upload images for plotRms
+ -- Milan Chrobok <mc@radiopiloten.de>  Wed, 20 Apr 2016 18:34:09 +0200
+
+playout (0.04.0031) trusty; urgency=low
+  * support rms detection using plotRms, optional
+ -- Milan Chrobok <mc@radiopiloten.de>  Tue, 19 Apr 2016 20:34:09 +0200
+
+playout (0.04.0028) trusty; urgency=low
+  * decrease log level
+ -- Milan Chrobok <mc@radiopiloten.de>  Thu, 07 Apr 2016 20:34:09 +0200
+
+playout (0.04.0027) trusty; urgency=low
+  * remove old temporary files after one day on init and start
+ -- Milan Chrobok <mc@radiopiloten.de>  Thu, 07 Apr 2016 20:04:09 +0200
+
+playout (0.04.0025) trusty; urgency=low
+  * do not cut file if audio duration is up to 3 seconds longer than expected 
+ -- Milan Chrobok <mc@radiopiloten.de>  Thu, 07 Apr 2016 21:04:09 +0200
+
+playout (0.04.0024) trusty; urgency=low
+  * before play, first check for cut, then sleep 
+ -- Milan Chrobok <mc@radiopiloten.de>  Thu, 07 Apr 2016 20:04:09 +0200
+
+playout (0.04.0021) precise; urgency=low
+  * use soxi to parse duration from file
+ -- Milan Chrobok <mc@radiopiloten.de>  Wed, 29 Dec 2015 12:04:09 +0200
+
+playout (0.04.0020) precise; urgency=low
+  * fix date check 
+ -- Milan Chrobok <mc@radiopiloten.de>  Wed, 23 Dec 2015 00:00:09 +0200
+
+playout (0.04.0019) precise; urgency=low
+  * set end date of last entry on uploading changes
+ -- Milan Chrobok <mc@radiopiloten.de>  Tue, 21 Apr 2015 22:55:09 +0200
+
+playout (0.04.0018) precise; urgency=low
+  * use storage to hold media duration
+  * refactoring
+ -- Milan Chrobok <mc@radiopiloten.de>  Tue, 21 Apr 2015 22:55:09 +0200
+
+playout (0.04.0016) precise; urgency=low
+  * fix logrotate handling
+  * major config naming
+  * warm up drives
+  * reload config
+  * cache last audio file duration
+ -- Milan Chrobok <mc@radiopiloten.de>  Tue, 11 Mar 2014 22:55:09 +0200
+
