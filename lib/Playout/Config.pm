@@ -2,18 +2,18 @@ package Config;
 
 use strict;
 use warnings;
-use Config::General;
+use Config::General();
 use Data::Dumper;
-use Playout::Time;
-use Playout::Log;
+use Playout::Time();
+use Playout::Log();
 
-our $configFile = '/etc/playout/playout.conf';
-
+my $configFile = '/etc/playout/playout.conf';
 my $lastReadConfig = 0;    # unix time configuration was read
-our $config         = {};
+my $config         = {};
 
 sub setConfigFile {
     $configFile = shift;
+    return;
 }
 
 sub getConfigFile {
@@ -35,6 +35,7 @@ sub hasChanged {
 sub setChanged {
     my $modifiedAt = getFileModificationDate($configFile);
     $lastReadConfig = $modifiedAt;
+    return;
 }
 
 # update configuration from config file
@@ -71,10 +72,10 @@ sub show {
 sub parse {
     my $filename = shift;
 
-    Log::error(qq{config file "$filename" does not exist}) unless ( -e $filename );
-    Log::error(qq{cannot read config "$filename"})         unless ( -r $filename );
+    Log::error(qq{config file "$filename" does not exist}) unless -e $filename ;
+    Log::error(qq{cannot read config "$filename"})         unless -r $filename ;
 
-    my $configuration = new Config::General($filename);
+    my $configuration = Config::General->new($filename);
     return $configuration->{DefaultConfig}->{config};
 }
 
@@ -107,3 +108,5 @@ sub getFileModificationDate {
     return $stat[9];
 }
 
+# do not delete last line
+1;

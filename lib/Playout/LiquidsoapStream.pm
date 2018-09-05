@@ -3,15 +3,17 @@ package Playout::LiquidsoapStream;
 use warnings;
 use strict;
 
+use Playout::Log();
+
 my $slotA      = 'StreamA';
 my $slotB      = 'StreamB';
 my $invalidUrl = 'http://localhost/invalid';
 
 sub isRunning {
-    my $event=shift;
+    my $event       = shift;
     my $playoutFile = $event->{file};
     my $url         = $event->{url} || $invalidUrl;
-    my $fallback    = $event->{fallbackUrl}|| $invalidUrl;
+    my $fallback    = $event->{fallbackUrl} || $invalidUrl;
 
     my $slot = getActiveSlot();
     unless ( defined $slot ) {
@@ -50,12 +52,12 @@ sub isRunning {
 }
 
 sub schedule {
-    my $event=shift;
+    my $event       = shift;
     my $playoutFile = $event->{file};
     my $url         = $event->{url} || $invalidUrl;
-    my $fallback    = $event->{fallbackUrl}|| $invalidUrl;
+    my $fallback    = $event->{fallbackUrl} || $invalidUrl;
 
-    Log::debug(1, qq{schedule playoutFile='$playoutFile', url='$url', fallback='$fallback'});
+    Log::debug( 1, qq{schedule playoutFile='$playoutFile', url='$url', fallback='$fallback'} );
 
     #try active slot
     my $slot = getActiveSlot();
@@ -83,18 +85,19 @@ sub schedule {
 }
 
 sub play {
-    my $event=shift;
+    my $event = shift;
 
-    my $slot = schedule( $event );
+    my $slot = schedule($event);
     activateSlot($slot);
     Log::debug( 1, "play stream $slot done" );
+    return;
 }
 
 sub stop {
-    my $event=shift;
+    my $event       = shift;
     my $playoutFile = $event->{file};
     my $url         = $event->{url} || $invalidUrl;
-    my $fallback    = $event->{fallbackUrl}|| $invalidUrl;
+    my $fallback    = $event->{fallbackUrl} || $invalidUrl;
 
     my $slot = getSlotForPlayoutFile($playoutFile);
     unless ( defined $slot ) {
@@ -126,7 +129,7 @@ sub activateSlot {
         Playout::LiquidsoapFile::deactivateSlot("SlotA");
         Playout::LiquidsoapFile::deactivateSlot("SlotB");
     }
-
+    return;
 }
 
 # deactivate a single slot
@@ -137,6 +140,7 @@ sub deactivateSlot {
     } elsif ( $slot eq $slotB ) {
         Playout::LiquidsoapClient::setBool( "isActiveStreamB", "false" );
     }
+    return;
 }
 
 sub getActiveSlot {
@@ -174,6 +178,7 @@ sub setStreams {
     setPlayoutFile( $slot, $playoutFile );
     setStream( $slot . '1', $url );
     setStream( $slot . '2', $fallback );
+    return;
 }
 
 sub setStream {
@@ -186,18 +191,19 @@ sub setStream {
     # check if already running
     return unless defined $url;
 
-    my $status='';
+    my $status = '';
     if ( $url ne getUrl($streamId) ) {
         clearStream($streamId);
-        $status=Playout::LiquidsoapClient::sendSocket( "$streamId.url " . $url );
+        $status = Playout::LiquidsoapClient::sendSocket( "$streamId.url " . $url );
         return unless defined $status;
     }
     $status = getStatus($streamId);
     return unless defined $status;
-    
+
     Playout::LiquidsoapClient::sendSocket("$streamId.start") unless $status =~ /connected/;
 
     Log::debug( 2, "setStream $streamId done" );
+    return;
 }
 
 sub clearStreams {
@@ -205,6 +211,7 @@ sub clearStreams {
     setPlayoutFile( $slot, "none" );
     clearStream( $slot . '1' );
     clearStream( $slot . '2' );
+    return;
 }
 
 sub clearStream {
@@ -222,7 +229,7 @@ sub clearStream {
         sleep(0.05);
         $status = Playout::LiquidsoapClient::sendSocket("$streamId.status");
 
-        while (( defined $status) && ($status !~ /stopped/) ) {
+        while ( ( defined $status ) && ( $status !~ /stopped/ ) ) {
             sleep(0.05);
             $status = Playout::LiquidsoapClient::sendSocket("$streamId.status");
             last if ( time - $start > $timeout );
@@ -231,6 +238,7 @@ sub clearStream {
     return unless defined $status;
     Playout::LiquidsoapClient::sendSocket("$streamId.url $invalidUrl");
     Log::debug( 2, "stopStream $streamId done" );
+    return;
 }
 
 sub getStatus {
@@ -245,8 +253,8 @@ sub getSlotForPlayoutFile {
     Log::error("missing playoutFile at getSlotForPlayoutFile") unless defined $playoutFile;
 
     for my $slot ( $slotA, $slotB ) {
-        my $file = Playout::LiquidsoapClient::getString( "PlayoutFile" . $slot )||'';
-        Log::debug(3, qq{'$playoutFile'=='$file'});
+        my $file = Playout::LiquidsoapClient::getString( "PlayoutFile" . $slot ) || '';
+        Log::debug( 3, qq{'$playoutFile'=='$file'} );
         return $slot if $file eq $playoutFile;
     }
     return undef;
@@ -277,8 +285,8 @@ sub getUrlsForSlot {
 sub getUrl {
     my $streamId = shift;
     Log::error("missing streamId at getStreamUrl") unless defined $streamId;
-    return Playout::LiquidsoapClient::sendSocket("$streamId.url")||'';
+    return Playout::LiquidsoapClient::sendSocket("$streamId.url") || '';
 }
 
 # do not delete last line
-return 1;
+1;

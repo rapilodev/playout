@@ -3,9 +3,8 @@ package Playout::Play;
 use warnings;
 use strict;
 
-require Exporter;
-my @ISA    = qw(Exporter);
-my @EXPORT = qw(playShow prepareShow runShow);
+use base 'Exporter';
+my @EXPORT_OK = ( 'playShow', 'prepareShow', 'runShow' );
 
 sub new {
     my ( $class, $args ) = @_;
@@ -13,10 +12,12 @@ sub new {
 }
 
 sub init {
+    return;
 
 }
 
 sub exit {
+    return;
 
 }
 
@@ -24,18 +25,23 @@ sub isRunning {
     my $self  = shift;
     my $event = shift;
     my $show  = shift;
+    return;
 }
 
 sub prepare {
+    return;
 }
 
 sub play {
     my $self  = shift;
     my $event = shift;
     my $show  = shift;
+    return;
 }
 
 sub stop {
+    return;
 }
 
-return 1;
+# do not delete last line
+1;

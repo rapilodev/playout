@@ -1,26 +1,32 @@
 package Time;
 
-use Playout::Log;
-use Time::HiRes qw(time);
-use DateTime;
-use Date::Calc qw(check_date check_time);
-
 use warnings;
 use strict;
 
+use Time::HiRes qw(time);
+use DateTime();
+use Date::Calc qw(check_date check_time);
+
+use Playout::Log();
+
 #time presets
-our $sec  = 1.0;
-our $min  = 60.0 * $sec;
-our $hour = 60.0 * $min;
-our $day  = 24.0 * $hour;
+my $sec  = 1.0;
+my $min  = 60.0 * $sec;
+my $hour = 60.0 * $min;
+my $day  = 24.0 * $hour;
 my $timeZone = undef;
 
 sub setTimeZone {
     $timeZone = shift;
+    return;
 }
 
 sub getTimeZone {
     return $timeZone;
+}
+
+sub getHourDef{
+    return $hour;
 }
 
 # convert a time into a human readable format
@@ -152,8 +158,8 @@ sub getUtcDatetime {
 
     unless ( defined $datetime ) {
         my $now = DateTime->now( time_zone => $timeZone );
-        my $nanoseconds=time;
-        $nanoseconds=int(1000000000*($nanoseconds-int($nanoseconds)));
+        my $nanoseconds = time;
+        $nanoseconds = int( 1000000000 * ( $nanoseconds - int($nanoseconds) ) );
         $now->set_nanosecond($nanoseconds);
         $now->set_time_zone('UTC');
         return $now;

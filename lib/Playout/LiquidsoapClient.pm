@@ -1,5 +1,3 @@
-use Playout::Log;
-
 package Playout::LiquidsoapClient;
 
 use warnings;
@@ -7,6 +5,7 @@ use strict;
 
 use IO::Socket::UNIX qw(SOCK_STREAM);
 use IO::Socket::INET qw(SOCK_STREAM);
+use Playout::Log();
 
 my $hostname   = 'localhost';
 my $port       = 1234;
@@ -31,30 +30,31 @@ sub init {
         Log::debug( 3, "connection lost to liquidsoap (broken pipe), close socket" );
         closeSocket();
     };
+    return;
 }
 
-sub getBool{
-    my $name=shift;
+sub getBool {
+    my $name = shift;
     return sendSocket(qq{var.get $name});
 }
 
-sub setBool{
-    my $name=shift;
-    my $value=shift;
+sub setBool {
+    my $name  = shift;
+    my $value = shift;
     return sendSocket(qq{var.set $name=$value});
 }
 
-sub getString{
-    my $name=shift;
-    my $result= sendSocket(qq{var.get $name});
-    $result=~s/^"// if defined $result;
-    $result=~s/"$// if defined $result;
+sub getString {
+    my $name   = shift;
+    my $result = sendSocket(qq{var.get $name});
+    $result =~ s/^"// if defined $result;
+    $result =~ s/"$// if defined $result;
     return $result;
 }
 
-sub setString{
-    my $name=shift;
-    my $value=shift;
+sub setString {
+    my $name  = shift;
+    my $value = shift;
     return sendSocket(qq{var.set $name="$value"});
 }
 
@@ -80,12 +80,14 @@ sub sendSocket {
         }
         return $result;
     }
-    Log::warn("neither liquidsoap unix socket is configured nor telnet host and port" );
+    Log::warn("neither liquidsoap unix socket is configured nor telnet host and port");
+    return;
 }
 
-sub closeSocket{
+sub closeSocket {
     closeFileSocket();
     closeTelnetSocket();
+    return;
 }
 
 sub sendFileSocket {
@@ -103,7 +105,7 @@ sub sendFileSocket {
 
     unless ( defined $fileSocket ) {
         my $message = "liquidsoap is not available! Cannot connect to socket $socketPath to send $command";
-        Log::error($message );
+        Log::error($message);
         return undef;
     }
 
@@ -138,6 +140,7 @@ sub closeFileSocket {
     <$fileSocket>              if defined $fileSocket;
     close $fileSocket          if defined $fileSocket;
     $fileSocket = undef;
+    return;
 }
 
 sub closeTelnetSocket {
@@ -147,11 +150,12 @@ sub closeTelnetSocket {
     <$telnetSocket>              if defined $telnetSocket;
     close $telnetSocket          if defined $telnetSocket;
     $telnetSocket = undef;
+    return;
 }
 
 sub sendTelnetSocket {
     my $command = shift;
-    Log::debug( 2, qq{send command "$command" to $hostname:$port} ,'green');
+    Log::debug( 2, qq{send command "$command" to $hostname:$port}, 'green' );
 
     unless ( defined $telnetSocket ) {
         Log::debug( 3, "open telnet socket to $hostname:$port" );
@@ -167,7 +171,7 @@ sub sendTelnetSocket {
 
     unless ( defined $telnetSocket ) {
         my $message = "liquidsoap is not available! Cannot connect to telnet $hostname:$port to send $command";
-        Log::error( $message );
+        Log::error($message);
         return undef;
     }
 
@@ -190,7 +194,8 @@ sub sendTelnetSocket {
     }
 
     $lines =~ s/\s+$//;
-    Log::debug( 2, "result:" . $lines ,"red");
+    Log::debug( 2, "result:" . $lines, "red" );
+
     #closeTelnetSocket();
 
     return $lines;
@@ -198,4 +203,4 @@ sub sendTelnetSocket {
 }
 
 # do not delete last line
-return 1;
+1;

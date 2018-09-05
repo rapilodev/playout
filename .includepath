@@ -2,5 +2,6 @@
 <includepath>
   <includepathentry path="/home/milan/radio/build/playout/playout-0.04.0069/lib" />
   <includepathentry path="/home/milan/radio/build/playout/playout/playout-0.04.0069/lib" />
+  <includepathentry path="/home/milan/radio/build/playout/playout/playout/lib" />
 </includepath>
 

@@ -3,8 +3,10 @@ package Playout::LiquidsoapFile;
 use warnings;
 use strict;
 
-our $slotA = 'SlotA';
-our $slotB = 'SlotB';
+use Playout::Log();
+
+my $slotA = 'SlotA';
+my $slotB = 'SlotB';
 
 sub getDefaultSlot {
     return $slotB;
@@ -86,6 +88,7 @@ sub scheduleFile {
     $slot = getOtherSlot($slot);
     clearSlot($slot);
     addFileToSlot( $slot, $file );
+    return;
 }
 
 # get the current playing slot
@@ -104,7 +107,7 @@ sub deactivateInactiveSlot{
     # clear inactive slot
     $slot = getOtherSlot($slot);
     clearSlot($slot);
-    
+    return;
 }
 
 sub deactivateSlot {
@@ -112,6 +115,7 @@ sub deactivateSlot {
     Log::error("missing file slot in deactivateSlot") unless defined $slot;
     Log::debug( 2, "deactivateSlot $slot" );
     Playout::LiquidsoapClient::setBool("isActive$slot","false");
+    return;
 }
 
 # play files in the given slot
@@ -135,6 +139,7 @@ sub activateSlot {
         Playout::LiquidsoapStream::deactivateSlot("StreamA");
         Playout::LiquidsoapStream::deactivateSlot("StreamB");
     }
+    return;
 }
 
 # add a file to a slot
@@ -152,6 +157,7 @@ sub addFileToSlot {
     }
 
     my $result = Playout::LiquidsoapClient::sendSocket("$slot.push $file");
+    return;
 }
 
 # return true if metadata contains file
@@ -192,6 +198,7 @@ sub clearSlot {
     for my $requestId (@$queue) {
         Playout::LiquidsoapClient::sendSocket("$slot.remove $requestId");
     }
+    return;
 }
 
 # get the opposite slot
@@ -216,4 +223,4 @@ sub getSlotForFile {
 }
 
 # do not delete last line
-return 1;
+1;

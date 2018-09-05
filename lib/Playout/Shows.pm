@@ -4,13 +4,14 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use Playout::Time;
-use Playout::MediaFiles;
+use Playout::Time();
+use Playout::MediaFiles();
 
 my $startUpDuration = 0;
 
 sub setStartUpDuration {
     $startUpDuration = shift;
+    return;
 }
 
 sub getStartUpDuration {
@@ -136,7 +137,7 @@ sub getStatus {
         }
         if ( $gap > 0 ) {
             Log::warn( qq{audio file "$show->{file}" - gap after show: } . Time::secondsToTime($gap) )
-              if $gap < 4 * $Time::hour;
+              if $gap < 4 * Time::getHourDef();
             $end_time = Time::getUtcDatetime($end);
         }
     }

@@ -2,8 +2,10 @@ package Process;
 use warnings;
 use strict;
 
-use Playout::Log;
+use Playout::Log();
 use Data::Dumper;
+use File::Basename();
+use File::Path();
 
 # build pid-file path from audio file name.
 sub getPidFile {
@@ -31,11 +33,15 @@ sub getPid {
     return 0 unless -e $pidFile;
 
     my $pid = 0;
-    open my $FILE, "<", $pidFile;
-    while ( (<$FILE>) ) {
+    open my $file, "<", $pidFile;
+    unless ($file) {
+        Log::error("could not open $pidFile");
+        return;
+    }
+    while ( (<$file>) ) {
         $pid = $_;
     }
-    close $FILE;
+    close $file;
     $pid =~ s/[^\d]//g;
     return $pid;
 }
@@ -58,17 +64,28 @@ sub isRunning {
         Log::debug( 2, "process $pid is running..." );
         return 1;
     }
-    Log::info( "process $pid is not running..." );
+    Log::info("process $pid is not running...");
     return 0;
 }
 
 sub writePidFile {
     my $pidFile = shift;
     my $pid     = shift;
+
+    my $dir   = File::Basename::dirname($pidFile);
+    my $error = undef;
+    File::Path::make_path( $dir, { error => $error } ) unless -d $dir;
+    Log::warn($error) if defined $error;
+
     Log::info(qq{write pid file "$pidFile"});
-    open( PIDFILE, ">", $pidFile ) or die(qq{cannot write pid file "$pidFile"});
-    print PIDFILE "$pid";
-    close(PIDFILE);
+    open( my $file, ">", $pidFile );
+    unless ($file) {
+        Log::warn(qq{cannot write pid file "$pidFile"});
+        return;
+    }
+    print $file "$pid";
+    close($file);
+    return;
 }
 
 # todo: remove pid file
@@ -81,6 +98,7 @@ sub stop {
     Log::debug( 0, "did not stop within a second, kill $pid" );
     return unless kill( 0, $pid );
     kill( 9, $pid );
+    return;
 }
 
 sub execute {

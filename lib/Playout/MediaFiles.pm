@@ -2,16 +2,19 @@ package MediaFiles;
 
 use warnings;
 use strict;
+
 use File::Basename ();
 use File::Find     ();
+
 use Storable();
 use File::Copy qw(move);
 use Data::Dumper;
-use Playout::Log;
-use Playout::Time;
-use Playout::Process;
 
-our $mediaDir = '/media/Playout/';
+use Playout::Log();
+use Playout::Time();
+use Playout::Process();
+
+my $mediaDir         = '/media/Playout/';
 my $cacheFile        = '/tmp/playout.dat';
 my $cache            = {};
 my $fullScanInterval = 3600;
@@ -22,15 +25,19 @@ my $lastShortScan     = 0;
 my $usePlot           = 0;
 my $syncPlotTargetDir = undef;
 my $gainCommand       = undef;
-my $userInfo=undef;
+my $userInfo          = undef;
 
-my @supportedFormats =
-  ( '.ogg', '.mp3', '.wav', '.flac', '.aac', '.aiff', '.m4a', '.m4b', '.mpc', '.oga', '.opus', '.stream' );
-my $supportedFormats = join( '|', map { quotemeta $_ } @supportedFormats );
+my $supportedFormats = [ '.ogg', '.mp3', '.wav', '.flac', '.aac', '.aiff', '.m4a', '.m4b', '.mpc', '.oga', '.opus', '.stream' ];
+
+#TODO: move initialization to init()
+my $supportedFormatPattern = join( '|', map { quotemeta $_ } @$supportedFormats );
 
 # initialize cache
 sub init {
     my $options = shift;
+
+    $supportedFormatPattern = join( '|', map { quotemeta $_ } @$supportedFormats );
+
     setMediaDir( $options->{mediaDir} )    if defined $options->{mediaDir};
     setCacheFile( $options->{cache_file} ) if defined $options->{cache_file};
     $cache = readCache();
@@ -40,6 +47,10 @@ sub init {
     my ( $result, $exitCode ) = Process::execute( $command . ' 2>&1' );
     $usePlot = 1 if $exitCode == 0;
     setSyncPlotTargetDir( $options->{syncPlotTargetDir} ) if defined $options->{syncPlotTargetDir};
+}
+
+sub getSupportedFormats {
+    return $supportedFormats;
 }
 
 sub getCache {
@@ -110,10 +121,10 @@ sub setSyncPlotTargetDir {
     $syncPlotTargetDir = shift;
 }
 
-sub getUserInfo{
-	return $userInfo if defined $userInfo;
-	$userInfo=`id`;
-	return $userInfo;
+sub getUserInfo {
+    return $userInfo if defined $userInfo;
+    $userInfo = `id`;
+    return $userInfo;
 }
 
 # print list of media files
@@ -121,12 +132,7 @@ sub listAudio {
     for my $path ( sort keys %$cache ) {
         next if $path eq 'date';
         next if $path eq 'info';
-        Log::info(
-            sprintf( "% 4d secs %s %s",
-                $cache->{$path}->{duration}    || 0,
-                $path                          || '',
-                $cache->{$path}->{playoutFile} || '' )
-        );
+        Log::info( sprintf( "% 4d secs %s %s", $cache->{$path}->{duration} || 0, $path || '', $cache->{$path}->{playoutFile} || '' ) );
     }
 }
 
@@ -271,7 +277,7 @@ sub compare {
         next unless defined $file->{start};
 
         my $extension = undef;
-        if ( $path =~ /($supportedFormats)$/i ) {
+        if ( $path =~ /($supportedFormatPattern)$/i ) {
             $extension = $1;
         } elsif ( $path =~ /(\.info)$/ ) {
             $extension = $1;
@@ -319,7 +325,7 @@ sub compare {
                 && ( $now > $expireTime - 3 * 60 )
               )
             {
-                Log::warn(  qq{abort scan of $path, expireTime=} . Time::timeToDatetime($expireTime) );
+                Log::warn( qq{abort scan of $path, expireTime=} . Time::timeToDatetime($expireTime) );
 
                 $expired = 1;
                 last;
@@ -333,7 +339,7 @@ sub compare {
         }
 
         $update = 1;
-        $updateAudio = 1 if $path =~ /($supportedFormats)$/i;
+        $updateAudio = 1 if $path =~ /($supportedFormatPattern)$/i;
 
         my $entry     = {};
         my $extension = $file->{extension};
@@ -357,8 +363,8 @@ sub compare {
             $entry->{modified_at} = $files->{$path}->{modified_at};
             $entry->{start}       = $start;
 
-			chmod 0664, $path unless -w $path;
-			my $error;
+            chmod 0664, $path unless -w $path;
+            my $error;
             if ( $path =~ /\.stream$/ ) {
                 $entry = parseStreamFile( $path, $entry );
             } else {
@@ -366,8 +372,9 @@ sub compare {
                 $entry = analyseAudio( $path, $entry );
                 $entry = applyGain( $path, $entry );
             }
-			
-            $entry->{end_epoch} = $entry->{start_epoch} + int( 0.5 + $entry->{duration} ) if (defined $entry->{start_epoch}) && (defined $entry->{duration});
+
+            $entry->{end_epoch} = $entry->{start_epoch} + int( 0.5 + $entry->{duration} )
+              if ( defined $entry->{start_epoch} ) && ( defined $entry->{duration} );
 
             # store file
             $cache->{$path} = $entry;
@@ -404,7 +411,7 @@ sub compare {
         next if ( defined $dir ) && ( !isLocatedAt( $path, $dir ) );
         unless ( defined $files->{$path} ) {
             $update = 1;
-            $updateAudio = 1 if $path =~ /($supportedFormats)$/i;
+            $updateAudio = 1 if $path =~ /($supportedFormatPattern)$/i;
             Log::info(qq{remove "$path" from database});
             delete $cache->{$path};
         }
@@ -489,12 +496,16 @@ sub getMetadata {
 
     my $mediaInfo = "/usr/bin/mediainfo";
 
-	unless (-e $mediaInfo){
-		Log::warn("cannot find $mediaInfo");
-		return {};
-	};
-	
-    open my $cmd, "$mediaInfo -f '$path' 2>&1 |";
+    unless ( -e $mediaInfo ) {
+        Log::warn("cannot find $mediaInfo");
+        return {};
+    }
+
+    open my $cmd, '-|', "$mediaInfo -f '$path' 2>&1";
+    unless ($cmd) {
+        Log::warn "could not execute $mediaInfo";
+        return {};
+    }
     while (<$cmd>) {
         my $line   = $_;
         my @fields = split( /\s+\:\s+/, $line, 2 );
@@ -668,13 +679,10 @@ sub analyseAudio {
 
     # get duration and rms, plot rms only if rms is installed
     ( $entry, $error ) = getDataFromPlotRms( $path, $entry );
+    return $entry unless $error;
 
     # fallback to soxi if plotRms is not installed
-    ( $entry, $error ) = getDurationFromSoxi( $path, $entry ) if defined $error;
-
-    # fallback to mp3 info
-    ( $entry, $error ) = getDurationFromMp3Info( $path, $entry ) if defined $error;
-    
+    ( $entry, $error ) = getDurationFromSoxi( $path, $entry );
     Log::info("finish analyse '$path'");
 
     return $entry;
@@ -685,6 +693,7 @@ sub applyGain {
     my $path  = shift;
     my $entry = shift;
 
+    return unless $path =~ /\.mp3$/;
     my $command = getGainCommand();
     unless ( defined $command ) {
         Log::debug( 2, "do not apply mp3gain due to 'gainCommand' is not configured" );
@@ -695,20 +704,20 @@ sub applyGain {
     my $targetDir = File::Basename::dirname($path);
     unless ( -w $targetDir ) {
         Log::error("applyGain(): cannot write to directory '$targetDir'. Please check permissions.");
-        Log::error(getUserInfo());
+        Log::error( getUserInfo() );
         return $entry;
     }
 
-	chmod 0664, $path;
-	unless(-w $path){
+    chmod 0664, $path;
+    unless ( -w $path ) {
         Log::error("applyGain(): cannot write to file '$path'. Please check permissions.");
-		return $entry;
-	}
+        return $entry;
+    }
     $command =~ s/AUDIO_FILE/\'$path\'/g;
     my ( $result, $exitCode ) = Process::execute( $command . ' 2>&1' );
     Log::debug( 2, "$result" );
     if ( $exitCode != 0 ) {
-        my $error = qq{could not apply m3gain to "$path" by "$command", exitCode=$exitCode};
+        my $error = qq{could not apply mp3gain to "$path" by "$command", exitCode=$exitCode};
         Log::error($error);
         Log::debug( 1, $result );
     }
@@ -719,7 +728,7 @@ sub applyGain {
         $entry->{replay_gain} = $replayGain;
     }
 
-    Log::debug(2, "update modification date of $path");
+    Log::debug( 2, "update modification date of $path" );
     my $modifiedAt = getFileModificationDate($path);
     $entry->{modified_at} = $modifiedAt;
 
@@ -743,7 +752,7 @@ sub getDataFromPlotRms {
     unless ( -w $targetDir ) {
         $error = "cannot write to directory '$targetDir'";
         Log::error($error);
-        Log::error(getUserInfo());
+        Log::error( getUserInfo() );
         return ( $entry, $error );
     }
 
@@ -796,30 +805,11 @@ sub getDurationFromSoxi {
 
     my $error = "could not get duration from soxi";
     Log::info(qq{get audio duration for "$path" from soxi});
-    if ( $path =~ /\.mp3$/i ) {
+    if ( $path =~ /\.(mp3|flac)$/i ) {
         my $command = qq{soxi -D '$path'};
         my ( $result, $exitCode ) = Process::execute( $command . ' 2>&1' );
 
         if ( $result =~ /([\d\.]+)/ ) {
-            $entry->{duration} = $1;
-            $error = undef;
-        }
-    }
-    Log::debug( 1, $error ) if defined $error;
-    return ( $entry, $error );
-}
-
-# get metadata using mp3info
-sub getDurationFromMp3Info {
-    my $path  = shift;
-    my $entry = shift;
-
-    my $error = "could not get duration from mp3info";
-    Log::info(qq{get audio duration for "$path" from mp3info});
-    if ( $path =~ /\.mp3$/i ) {
-        my $command = qq{mp3info -p "%S" '$path'};
-        my ( $result, $exitCode ) = Process::execute($command);
-        if ( $result =~ /(\d+)/ ) {
             $entry->{duration} = $1;
             $error = undef;
         }
@@ -911,7 +901,7 @@ sub scanDir {
     my $previousFile  = undef;
     my $previousStart = undef;
     for my $path ( sort keys %$files ) {
-        next unless $path =~ /($supportedFormats)$/i;
+        next unless $path =~ /($supportedFormatPattern)$/i;
         my $start = $files->{$path}->{start};
         if ( defined $previousFile ) {
             if ( $start eq $previousStart ) {
@@ -945,9 +935,9 @@ sub setCache {
     my $cache = shift;
 
     my $cacheFile = getCacheFile();
-    if ((-e $cacheFile) && (! -w $cacheFile)){
-    	Log::error("cannot write $cacheFile");
-    	Log::error(getUserInfo());
+    if ( ( -e $cacheFile ) && ( !-w $cacheFile ) ) {
+        Log::error("cannot write $cacheFile");
+        Log::error( getUserInfo() );
     }
     Log::info(qq{store file cache at "$cacheFile"});
     Storable::store( $cache, $cacheFile );
@@ -1001,4 +991,3 @@ sub getFileModificationDate {
 
 # do not delete last line
 1;
-

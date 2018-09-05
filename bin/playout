@@ -1,31 +1,33 @@
 #!/usr/bin/perl
 
+use warnings;
+use strict;
 use utf8;
+
 use Data::Dumper;
-use Config::General;
 use Getopt::Long qw(:config bundling);
 
-use Playout::Log;
-use Playout::Config;
-use Playout::MediaFiles;
-use Playout::Time;
+use Playout::Log();
+use Playout::Config();
+use Playout::MediaFiles();
+use Playout::Time();
 
 my $help    = undef;
 my $verbose = 0;
-GetOptions(
+Getopt::Long::GetOptions(
     "h|help"    => \$help,
     "verbose=i" => \$verbose
 );
 
 # read configuration
-our ( $config, $error ) = updateConfig();
+my ( $config, $error ) = updateConfig();
 MediaFiles::init();
 
 if ( defined $help ) {
     print usage();
     exit 0;
 }
-exit if ( $error > 0 );
+exit if $error > 0 ;
 
 my $query = join( ' ', @ARGV );
 $query =~ s/^\s+//g;
@@ -74,8 +76,9 @@ sub query {
             print "  '" . $result->{$date}->{$start}->{file} . "'\n";
         }
 
-        my $rmsLeft  = undef;
-        my $rmsRight = undef;
+        my $rmsLeft    = undef;
+        my $rmsRight   = undef;
+        my $replayGain = undef;
         $rmsLeft    = $cache->{$file}->{rms_left}    if defined $cache->{$file}->{rms_left};
         $rmsRight   = $cache->{$file}->{rms_right}   if defined $cache->{$file}->{rms_right};
         $replayGain = $cache->{$file}->{replay_gain} if defined $cache->{$file}->{replay_gain};
@@ -125,10 +128,10 @@ sub query {
                 printf( "%20s %-10s %s\n", '', "duration", Time::secondsToTime( $info->{duration} ) );
                 $lines++;
             }
-            my $replayGain='';
-            $replayGain=sprintf(", replayGain:%s", $info->{replayGain} ) if defined $info->{replayGain};
+            my $replayGain = '';
+            $replayGain = sprintf( ", replayGain:%s", $info->{replayGain} ) if defined $info->{replayGain};
             if ( ( defined $info->{rmsLeft} ) && ( defined $info->{rmsRight} ) ) {
-                printf( "%20s %-10s left %s dB, right %s dB%s\n", '', "RMS", $info->{rmsLeft}, $info->{rmsRight}, $replayGain);
+                printf( "%20s %-10s left %s dB, right %s dB%s\n", '', "RMS", $info->{rmsLeft}, $info->{rmsRight}, $replayGain );
                 $lines++;
             }
             print "\n" if $lines > 1;
@@ -154,7 +157,7 @@ sub updateConfig {
 
     # add checks
     $error += MediaFiles::checkMediaDir();
-    return $config, $error;
+    return ($config, $error);
 }
 
 sub usage {
@@ -177,4 +180,5 @@ OPTION:
   -h --help            help
   
 };
+    return;
 }

@@ -2,13 +2,18 @@ package Log;
 
 use warnings;
 use strict;
-use Term::ANSIColor;
+
+use Term::ANSIColor();
 use Time::HiRes qw(time);
 
-# debug level [0..]
-our $debug = 0;
+use base 'Exporter';
+our @EXPORT_OK =
+  ( 'debug', 'info', 'error', 'exec', 'warn', 'object', 'objectInline', 'setLevel', 'getLevel', 'setLogFile', 'getLogFile', 'getDateTime' );
 
-our $logFile = '/var/log/playout/playout.log';
+# debug level [0..]
+my $debug = 0;
+
+my $logFile = '/var/log/playout/playout.log';
 
 sub setLogFile {
     $logFile = shift;
@@ -18,26 +23,36 @@ sub getLogFile {
     return $logFile;
 }
 
+sub setLevel {
+    $debug = shift;
+    $debug = 1 unless defined $debug;
+}
+
+sub getLevel {
+    return $debug;
+}
+
 # output debug if level greater than current debug level
 sub debug($$;$) {
     my $level   = $_[0];
     my $message = $_[1];
     my $color   = $_[2];
 
-    my $color2=$color||'';
+    my $color2 = $color || '';
+
     #print STDERR "debug '$level','$message','$color2'\n";
 
     return if $debug == 0;
     return unless $debug > $level;
 
-    print color $color if defined $color;
+    print Term::ANSIColor::color $color if defined $color;
 
     my $date = getDateTime();
     for my $line ( split /\n/, $message ) {
         print "$date --DEBUG-- $level\t$line\n";
     }
 
-    print color 'reset' if defined $color;
+    print Term::ANSIColor::color 'reset' if defined $color;
 }
 
 # same as debug but print plain line without date and level.
@@ -60,17 +75,17 @@ sub info($) {
 sub header($) {
     return unless ( $debug > 1 );
     my $date = getDateTime();
-    print color 'blue';
+    print Term::ANSIColor::color 'blue';
     print "$date --enter-- " . $_[0] . "\n";
-    print color 'reset';
+    print Term::ANSIColor::color 'reset';
 }
 
 # print error
 sub error($) {
     my $date = getDateTime();
-    print color 'red';
+    print Term::ANSIColor::color 'red';
     print "$date --ERROR-- " . $_[0] . "\n";
-    print color 'reset';
+    print Term::ANSIColor::color 'reset';
 }
 
 # print execution command
@@ -88,7 +103,7 @@ sub warn($) {
 
 # dump object
 sub object {
-    my $level=shift;
+    my $level = shift;
     my $entry = shift;
     my $depth = shift || 0;
 
@@ -119,14 +134,14 @@ sub object {
 }
 
 sub objectInline {
-    my $level=shift;
+    my $level = shift;
     my $entry = shift;
     my $depth = shift || 0;
 
     return if $debug == 0;
     return unless $debug > $level;
 
-    my $date  = getDateTime();
+    my $date = getDateTime();
 
     my $line = '';
     if ( ref($entry) eq 'SCALAR' ) {
@@ -151,19 +166,7 @@ sub objectInline {
 sub getDateTime {
     my $time = time;
     ( my $sec, my $min, my $hour, my $day, my $month, my $year ) = localtime($time);
-    return sprintf(
-        "%4d-%02d-%02d %02d:%02d:%02d.%03d",
-        $year + 1900,
-        $month + 1, $day, $hour, $min, $sec, ( $time - int($time) ) * 1000
-    );
-}
-
-sub setLevel {
-    $Log::debug = shift || 0;
-}
-
-sub getLevel {
-    return $Log::debug;
+    return sprintf( "%4d-%02d-%02d %02d:%02d:%02d.%03d", $year + 1900, $month + 1, $day, $hour, $min, $sec, ( $time - int($time) ) * 1000 );
 }
 
 sub openLog {

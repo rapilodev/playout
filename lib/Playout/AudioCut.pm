@@ -2,12 +2,11 @@ package AudioCut;
 use warnings;
 use strict;
 
-use DateTime;
-use DateTime::Format::ISO8601;
-use Playout::Time;
-use Playout::Log;
-use Playout::Process;
 use Data::Dumper;
+
+use Playout::Time();
+use Playout::Log();
+use Playout::Process();
 
 my $outputDirectory = '';
 my $startUpDuration = 0;
@@ -15,10 +14,12 @@ my $startUpDuration = 0;
 # add startUpDuration to current time to start earlier.
 sub setStartUpDuration {
     $startUpDuration = shift;
+    return;
 }
 
 sub setOutputDirectory {
     $outputDirectory = shift;
+    return;
 }
 
 # return filename
@@ -133,7 +134,7 @@ cut end:      $cutPoints->{end}
     return $cutPoints;
 }
 
-# split mp3/ogg file from start to end using mp3splt
+# split mp3/ogg/flac file from start to end using mp3splt
 # see http://mp3splt.sourceforge.net/mp3splt_page/home.php
 # return file name
 sub cut {
@@ -163,6 +164,7 @@ sub removeOldFiles {
         unlink $file || Log::warn("cannot remove $file");
     }
     closedir($dh);
+    return;
 }
 
 #calc filename for cutted file from output dir and original filename
@@ -233,7 +235,7 @@ sub getFileDuration {
     Log::debug( 1, $cmd );
     my ( $result, $exitCode ) = Process::execute($cmd);
     $result =~ s/\s+//g;
-    return -1 unless ( $result =~ /^\d+$/ );
+    return -1 unless $result =~ /^\d+$/;
     return $result;
 }
 
@@ -247,4 +249,4 @@ sub secondsToMp3splt {
 }
 
 # do not delete last line
-return 1;
+1;

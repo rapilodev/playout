@@ -1,3 +1,14 @@
+playout (0.04.0071) bionic; urgency=low
+  * fix systemd group
+  * do not die on not writing PID file
+  * set default logging severity 1
+ -- Milan Chrobok <mc@radiopiloten.de>  Wed, 05 Sep 2018 12:00:00 +0200
+
+playout (0.04.0070) bionic; urgency=low
+  * add flac support
+  * refactor perl includes
+ -- Milan Chrobok <mc@radiopiloten.de>  Wed, 05 Sep 2018 12:00:00 +0200
+
 playout (0.04.0069) xenial; urgency=low
   * playout_synch.pl handle broken image downloads
  -- Milan Chrobok <mc@radiopiloten.de>  Sun, 05 Nov 2017 12:00:00 +0200

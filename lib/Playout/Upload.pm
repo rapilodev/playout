@@ -2,16 +2,17 @@ package Upload;
 
 use warnings;
 use strict;
-use JSON;
+use JSON();
+use LWP::UserAgent();
+use Date::Calc();
 use Data::Dumper;
-use LWP::UserAgent;
-use Date::Calc;
+use HTTP::Request();
 
-use Playout::Log;
-use Playout::Time;
-use Playout::MediaFiles;
+use Playout::Log();
+use Playout::Time();
+use Playout::MediaFiles();
 
-our $url = undef;
+my $url = undef;
 
 # get upload URL
 sub getUrl {
@@ -104,7 +105,7 @@ sub upload {
     };
 
     # encode json
-    my $json = to_json($document);
+    my $json = JSON::to_json($document);
 
     #my $json = encode_json($document);
     Log::debug( 0, $json );
@@ -152,4 +153,3 @@ sub addSeconds {
 
 # do not delete last line
 1;
-

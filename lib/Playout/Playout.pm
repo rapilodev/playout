@@ -1,11 +1,5 @@
 package Playout;
 
-require Exporter;
-@ISA    = qw(Exporter);
-@EXPORT = qw(run);
-
-$VERSION = '0.04_0069';
-
 =head1 NAME
 
 playout - scheduled play out of audio file
@@ -21,28 +15,27 @@ It is recommended to have ntpd running to make sure your system time is up to da
 
 After any failure like system crash or power loss playout will continue to play out in-time.
 If an audio file is (re-)scheduled to start in the past, the playout will play at in-time position.
-If another files is put before or after the current file, files will be cut so they will not overlap.
-Cutting is supported for mp3 files only.
+If another files is put before or after the current file, files will be cutted so they will not overlap.
+Cutting uses mp3splt and is supported for mp3, flac and ogg only.
 
-Playout uses an upstart service and will automatically restart after crash or reboot.
-You can stop the service by "sudo stop playout" and start it by "sudo start playout". 
+Playout uses an upstart or systemd service and will automatically restart after crash or reboot.
 
 If there is more than one file in a mediaDir subdirectory, playout triggers the first audio file sorted by name.
 To avoid overlapping or silence on sequentially scheduled files, make sure audio files have exactly the scheduled duration.
 
-Playout will not play audio files itself but start a configured player. 
+Playout will not play audio files itself but start a configured player instead. 
 Your system should support an alsa mixer or pulse audio to mix output of multiple player instances.
 
-After changing configuration no restart is necessary.
-A list of available media files is stored internally and frequently updated to reduce disk usage. 
+Changes of the configuration will be detected and reread on the fly.
+A list of all audio files is stored internally and frequently updated to reduce disk IO. 
 
 To automatically create the media sub directories (containing the schedule date and time in the path) 
 you can import a JSON schedule from an URL by running playout_sync.pl. See playout_sync.pl --help for details.
 
-At point of installation a user 'playout' will be created and assigned to groups 'playout', 'audio', 'pulse' and 'pulse-access'
+At point of installation na user 'playout' will be created and assigned to groups 'playout', 'audio', 'pulse' and 'pulse-access'
 to enable audio access and separate it from other user accounts.
 
-If you dont want to use the upstart service, you can run 'playout.pl' at command line.
+If you dont want to use the service, you can also run 'playout.pl' at command line.
 If you use option --daemon logs and pid file will be created.
 
 CONFIGURATION
@@ -101,7 +94,7 @@ Milan Chrobok <mc@radiopiloten.de>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2008-2016 Milan Chrobok.
+Copyright 2008-2018 Milan Chrobok.
 
 GPL-3+
 
@@ -110,29 +103,32 @@ GPL-3+
 use warnings;
 use strict;
 
-use Data::Dumper;
-use LWP::Simple;
-use DateTime;
-use DateTime::Format::ISO8601;
-use File::Path qw(make_path);
-use Getopt::Long;
-use POSIX;
+#use Data::Dumper;
+#use LWP::Simple();
+#use DateTime();
+#use DateTime::Format::ISO8601();
+#use File::Path qw(make_path);
+#use Getopt::Long();
+#use POSIX();
 use Time::HiRes qw(time sleep);
 
-use Playout::Log;
-use Playout::Config;
-use Playout::MediaFiles;
-use Playout::Shows;
-use Playout::Time;
-use Playout::Process;
-use Playout::Upload;
-use Playout::Play::Simple;
-use Playout::Play::VlcServer;
-use Playout::Play::Liquidsoap;
+use Playout::Log();
+use Playout::Config();
+use Playout::MediaFiles();
+use Playout::Shows();
+use Playout::Time();
+use Playout::Process();
+use Playout::Upload();
+use Playout::Play::Simple();
+use Playout::Play::VlcServer();
+use Playout::Play::Liquidsoap();
+
+use base 'Exporter';
+our @EXPORT_OK = ('run');
 
 # values read from configuration
 my $tempDir = undef;    # temporary directory for cutted files and pid files
-our $player = undef;
+my $player = undef;
 
 # cache finished shows by filename and modification date to prevent multiple file duration detection
 
@@ -153,11 +149,11 @@ sub run() {
 	}
 
 	if ( $interface eq 'vlcServer' ) {
-		$player = Play::VlcServer->new( $Config::config->{vlcServer} );
+		$player = Play::VlcServer->new( Config::get('vlcServer') );
 	} elsif ( $interface eq 'liquidsoap' ) {
-		$player = Play::Liquidsoap->new( $Config::config->{liquidsoap} );
+		$player = Play::Liquidsoap->new( Config::get('liquidsoap') );
 	} else {
-		$player = Play::Simple->new( $Config::config->{simple} );
+		$player = Play::Simple->new( Config::get('simple') );
 	}
 
 	while (1) {
@@ -248,6 +244,7 @@ sub run() {
 		}
 		sleep 10;
 	}
+	return;
 }
 
 sub isFileMissing {
@@ -294,6 +291,7 @@ sub init {
 
 	AudioCut::removeOldFiles();
 	MediaFiles::init($config);
+	return;
 
 }
 
@@ -356,6 +354,7 @@ initCommand        '} . Config::get('initCommand') . qq{'
 playCommand        '} . Config::get('playCommand') . qq{'
 }
 	);
+	return;
 }
 
 # get last modification date of file
@@ -368,4 +367,3 @@ sub getFileModificationDate {
 
 # do not delete last line
 1;
-

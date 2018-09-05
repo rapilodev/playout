@@ -2,14 +2,15 @@
 
 use warnings;
 use strict;
-
 use utf8;
-use Getopt::Long qw(GetOptions);
-use LWP::Simple;
-use Playout::Playout qw();
-use Playout::Log qw();
-use Playout::Config qw();
-use Playout::Process qw();
+
+use Getopt::Long();
+
+use Playout::Playout    ();
+use Playout::Log        ();
+use Playout::Config     ();
+use Playout::Process    ();
+use Playout::MediaFiles ();
 
 $| = 1;
 
@@ -17,45 +18,45 @@ my $configFile = undef;
 my $daemon     = undef;
 my $help       = undef;
 
-GetOptions(
-	'c|config=s' => \$configFile,
-	'd|daemon'   => \$daemon,
-	'h|help'     => \$help,
+Getopt::Long::GetOptions(
+    'c|config=s' => \$configFile,
+    'd|daemon'   => \$daemon,
+    'h|help'     => \$help,
 );
 
 if ( defined $help ) {
-	print getUsage();
-	exit 0;
+    print getUsage();
+    exit 0;
 }
 
 Playout::init(
-	{
-		configFile => $configFile,
-		daemon     => $daemon,
-	}
+    {
+        configFile => $configFile,
+        daemon     => $daemon,
+    }
 );
 
 my $pidFile = Config::get('pidFile');
 
 if ( defined $daemon ) {
-	Process::writePidFile( $pidFile, $$ );
+    Process::writePidFile( $pidFile, $$ );
 
-	# reopen log on logrotate
-	$SIG{HUP} = \&Log::openLog;
+    # reopen log on logrotate
+    $SIG{HUP} = \&Log::openLog;
 }
 
 #kill all vlcs on exit
 $SIG{INT} = sub {
-	my $player = Playout::getPlayer();
-	$player->exit() if defined $player;
-	unlink $pidFile if -e $pidFile;
-	exit;
+    my $player = Playout::getPlayer();
+    $player->exit() if defined $player;
+    unlink $pidFile if -e $pidFile;
+    exit;
 };
 
 Playout::run();
 
 sub getUsage {
-	return q{
+    return q{
 playout.pl OPTION+
 
 OPTION:
@@ -67,4 +68,3 @@ OPTION:
 see man playout for details.    
 };
 }
-

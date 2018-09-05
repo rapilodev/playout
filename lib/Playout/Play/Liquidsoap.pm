@@ -6,13 +6,13 @@ use strict;
 use Time::HiRes qw(time sleep);
 use Data::Dumper;
 
-use Playout::Log;
-use Playout::MediaFiles;
-use Playout::Process;
-use Playout::AudioCut;
-use Playout::LiquidsoapClient;
-use Playout::LiquidsoapStream;
-use Playout::LiquidsoapFile;
+use Playout::Log();
+use Playout::MediaFiles();
+use Playout::Process();
+use Playout::AudioCut();
+use Playout::LiquidsoapClient();
+use Playout::LiquidsoapStream();
+use Playout::LiquidsoapFile();
 
 use base 'Play';
 
@@ -35,14 +35,16 @@ sub new {
 sub init {
     my $args = shift;
     Process::execute( $args->{onInitCommand} ) if defined $args->{onInitCommand};
+    return;
 }
 
 # will be called at stop of playout
 sub exit {
     my $self = shift;
     return unless defined $self->{onExitCommand};
-    my ($result, $exitCode)=Process::execute($self->{onExitCommand});
+    my ( $result, $exitCode ) = Process::execute( $self->{onExitCommand} );
     print $result;
+    return;
 }
 
 # check if player process runs
@@ -76,7 +78,7 @@ sub prepare {
     AudioCut::removeOldFiles();
 
     if ( defined $event->{url} ) {
-        my $url      = $event->{url};
+        my $url = $event->{url};
         Log::info("prepare '$url'");
         Playout::LiquidsoapFile::deactivateInactiveSlot();
         Playout::LiquidsoapStream::schedule($event);
@@ -85,6 +87,7 @@ sub prepare {
         Log::info( "prepare '" . $event->{file} . "'" );
         Playout::LiquidsoapFile::scheduleFile( $event->{file} );
     }
+    return;
 
 }
 
@@ -122,6 +125,7 @@ sub play {
         Playout::LiquidsoapFile::activateSlot($slot);
     }
     Log::debug( 1, "play done" );
+    return;
 }
 
 # stop player
@@ -130,14 +134,15 @@ sub stop {
     my $event = shift;
     $event->{playoutFile} = MediaFiles::getPlayoutFile($event);
 
-    my $playoutFile=$event->{playoutFile};
+    my $playoutFile = $event->{playoutFile};
     if ( defined $event->{url} ) {
         Playout::LiquidsoapStream::stop($event);
     } else {
-        my $slot        = Playout::LiquidsoapFile::getSlotForFile($playoutFile);
+        my $slot = Playout::LiquidsoapFile::getSlotForFile($playoutFile);
         Playout::LiquidsoapFile::clearSlot($slot) if defined $slot;
     }
     Log::debug( 0, "end of stop" );
+    return;
 }
 
 # set playoutFile and cut
@@ -170,7 +175,8 @@ sub cut {
 
     # store playout file
     MediaFiles::setPlayoutFile( $event->{file}, $event->{playoutFile} );
+    return;
 }
 
 # do not delete last line
-return 1;
+1;

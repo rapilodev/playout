@@ -1,23 +1,20 @@
 package Play::VlcServer;
 
-#!/usr/bin/perl
-
 use strict;
 use warnings;
 
-use LWP::UserAgent;
-use URI::Escape;
+use LWP::UserAgent();
+use URI::Escape();
 
-#use XML::LibXML;
 use Data::Dumper;
 use XML::LibXML::Simple qw(XMLin);
 
-use Playout::Log;
+use Playout::Log();
 
 use base 'Play';
 
-our $ua      = undef;
-our $pidFile = undef;
+my $ua      = undef;
+my $pidFile = undef;
 
 # hostname,
 # port,
@@ -46,11 +43,13 @@ sub init {
     #start server
     $self->startVlcServer();
     $self->clearPlaylist();
+    return;
 }
 
 sub exit {
     my $self = shift;
     $self->stopVlcServer();
+    return;
 }
 
 sub startVlcServer {
@@ -69,6 +68,7 @@ sub startVlcServer {
     $cmd =~ s/PASSWORD/$self->{password}/g;
     Log::info("start vlc server");
     Process::execute($cmd);
+    return;
 }
 
 sub stopVlcServer {
@@ -81,6 +81,7 @@ sub stopVlcServer {
         Process::stop($pid) if Process::isRunning($pid);
         unlink $pidFile;
     }
+    return;
 }
 
 sub isServerRunning {
@@ -99,7 +100,7 @@ sub prepare {
 
     Log::debug( 0, "remove old cut files" );
     AudioCut::removeOldFiles();
-
+    return;
 }
 
 sub isRunning {
@@ -131,8 +132,7 @@ sub isRunning {
         return 0;
     }
 
-    Log::debug( 2,
-        "state=$state, time=$time, currentId=$currentId, playlistId=$playItem->{id}, current=$playItem->{current}" );
+    Log::debug( 2, "state=$state, time=$time, currentId=$currentId, playlistId=$playItem->{id}, current=$playItem->{current}" );
 
     if ( ( $state eq 'playing' ) && ( $playItem->{current} ) ) {
         Log::debug( 2, "is playing" );
@@ -168,12 +168,12 @@ sub parseIds {
         if ( ( defined $node->{uri} ) && ( defined $node->{id} ) ) {
             my $uri = $node->{uri};
             $uri =~ s/^file\:\/\///;
-            $node->{uri}     = uri_unescape();
+            $node->{uri}     = URI::Escape::uri_unescape();
             $node->{current} = 0 unless defined $node->{current};
             $result->{$uri}  = $node;
         }
-
     }
+    return;
 }
 
 sub getPlaylistItem {
@@ -231,9 +231,7 @@ sub stop {
     my $self  = shift;
     my $event = shift;
     $event->{playoutFile} = MediaFiles::getPlayoutFile($event);
-
-    #my $result = $self->action( 'status.xml', { command => 'pl_stop' } );
-    #return $result;
+    return;
 }
 
 sub status {
@@ -260,7 +258,7 @@ sub seek {
 sub playlist {
     my $self   = shift;
     my $result = $self->action('playlist.xml');
-
+    return;
 }
 
 sub action {
@@ -272,7 +270,7 @@ sub action {
 
     my $params = [];
     for my $key ( keys %$options ) {
-        push @$params, $key . '=' . uri_escape( $options->{$key} );
+        push @$params, $key . '=' . URI::Escape::uri_escape( $options->{$key} );
     }
     $url .= '?' . join( '&', @$params ) if scalar($params) > 0;
 
@@ -292,16 +290,12 @@ sub query {
     my $doc      = undef;
     if ( $response->is_success ) {
         my $content = $response->content;
-        my $doc = XMLin( $content, ForceArray => 1, KeyAttr => [] );
-
-        #$doc = XML::LibXML->load_xml( string => $content );
+        my $doc = XML::LibXML::Simple::XMLin( $content, ForceArray => 1, KeyAttr => [] );
         return $doc;
     } else {
         Log::warn( $response->{_rc} . " on $url" );
-
-        #print STDERR Dumper($response);
         return undef;
     }
 }
 
-return 1;
+1;
