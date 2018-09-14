@@ -1,3 +1,9 @@
+playout (0.04.0072) bionic; urgency=low
+  * fix broken package import in playout_synch.pl
+  * fix broken image download
+    activate by setting "syncImageSourceUrl" in /etc/playout/playout.conf
+ -- Milan Chrobok <mc@radiopiloten.de>  Wed, 14 Sep 2018 08:00:00 +0200
+  
 playout (0.04.0071) bionic; urgency=low
   * fix systemd group
   * do not die on not writing PID file

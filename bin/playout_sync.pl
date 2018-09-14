@@ -17,7 +17,7 @@ use Playout::Config();
 use Playout::MediaFiles();
 use Playout::Time();
 
-my $fileTypes = Playout::MediaFiles::getSupportedFormats();
+my $fileTypes = MediaFiles::getSupportedFormats();
 
 my $configFile = undef;
 my $from       = '';
@@ -50,6 +50,9 @@ Log::error( "cannot find syncGetScheduleUrl at " . Config::getConfigFile() ) if 
 my $syncRecordingUrl = Config::get('syncGetRecordingUrl') || '';
 Log::warn( "cannot find syncGetRecordingUrl at " . Config::getConfigFile() ) if $syncRecordingUrl eq '';
 
+my $syncImageSourceUrl = Config::get('syncImageSourceUrl') || '';
+Log::warn( "cannot find syncImageSourceUrl at " . Config::getConfigFile() ) if $syncImageSourceUrl eq '';
+
 # add params from and till to sync_source_url
 if ( $from =~ /(\d\d\d\d\-\d\d\-\d\d)/ ) {
     $syncSourceUrl .= '&from_date=' . $1;
@@ -64,7 +67,7 @@ my $userAgent = LWP::UserAgent->new;
 Log::debug( 1, "sync_source_url=" . $syncSourceUrl );
 my $events = getEventsFromJson( $userAgent, $syncSourceUrl );
 $events = filterEvents($events);
-$events = synchronizeStorage( $events, $syncRecordingUrl );
+$events = synchronizeStorage( $events, $syncRecordingUrl, $syncImageSourceUrl );
 
 # filter events ascending by start
 # filter events descending by upload date
@@ -96,8 +99,9 @@ sub filterEvents {
 # - create a directory
 # - create a .info file containing event metadata
 sub synchronizeStorage {
-    my $events           = shift;
-    my $syncRecordingUrl = shift;
+    my $events             = shift;
+    my $syncRecordingUrl   = shift;
+    my $syncImageSourceUrl = shift;
 
     for my $event (@$events) {
         my $dir = Time::datetimeToPath( MediaFiles::getMediaDir(), $event->{start_datetime} );
@@ -140,7 +144,9 @@ sub synchronizeStorage {
         }
 
         #save event image
-        saveImage( $userAgent, $event->{image}, $dir );
+        my $imageUrl = $event->{image};
+        $imageUrl = $syncImageSourceUrl . $event->{image} if $syncImageSourceUrl ne '';
+        saveImage( $userAgent, $imageUrl, $dir );
 
         #save upload
         saveRecording( $userAgent, $event, $syncRecordingUrl, $dir ) if defined $event->{path};
@@ -313,12 +319,6 @@ sub saveImage {
 
     return unless defined $url;
 
-    if ( $url =~ /^\// ) {
-        if ( $syncSourceUrl =~ /(https?\:\/\/[^\/]+\/)/ ) {
-            my $domain = $1;
-            $url =~ s/^\/+/$domain/g;
-        }
-    }
     my $imageName = ( split( /\//, $url ) )[-1];
     my $path      = $dir . "/" . $imageName;
     my $response  = $userAgent->mirror( $url, $path );
