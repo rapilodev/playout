@@ -1,3 +1,7 @@
+playout (0.04.0073) bionic; urgency=low
+  * add RMS and peak plot in svg using plotRms
+ -- Milan Chrobok <mc@radiopiloten.de>  Wed, 21 Sep 2018 08:00:00 +0200
+
 playout (0.04.0072) bionic; urgency=low
   * fix broken package import in playout_synch.pl
   * fix broken image download

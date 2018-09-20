@@ -761,11 +761,28 @@ sub getDataFromPlotRms {
     $targetFile =~ s/\#/Nr\./g;
     $targetFile =~ s/[\?\&]+/_/g;
     $targetFile =~ s/\_+/\_/g;
-    $targetFile .= '.png';
-    my $plotFile = "$targetDir/$targetFile";
 
-    my $command = "plotRms -i '$path' -o '$plotFile'";
-    my ( $result, $exitCode ) = Process::execute( $command . ' 2>&1' );
+    my $result = '';
+    for my $suffix ( 'png', 'svg' ) {
+        my $imageFile = "$targetDir/$targetFile.$suffix";
+
+        my $command = "plotRms -i '$path' -o '$imageFile'";
+        ( $result, my $exitCode ) = Process::execute( $command . ' 2>&1' );
+
+        # this will not be handled as reason for fallback to other detection method
+        if ( $exitCode != 0 ) {
+            my $error = qq{could not analyse and plot "$path" by 'plotRms', exitCode=$exitCode};
+            Log::warn($error);
+            Log::debug( 1, $result );
+        }
+
+        if ( -e $imageFile ) {
+            chmod 0664, $imageFile;
+            # both svg and png files will be uploaded, but only svg will be added to database as rms_image 
+            $entry->{rms_image} = getPathRelativeToMediaDir($imageFile);
+            syncPlotFileTarget( $entry->{rms_image} );
+        }
+    }
 
     for my $line ( split( /\n/, $result ) ) {
         if ( $line =~ /duration\=([\-\d\.]+)$/ ) {
@@ -775,19 +792,6 @@ sub getDataFromPlotRms {
         } elsif ( $line =~ /rmsRight\=([\-\d\.]+)$/ ) {
             $entry->{rms_right} = $1;
         }
-    }
-
-    if ( -e $plotFile ) {
-        chmod 0664, $plotFile;
-        $entry->{rms_image} = getPathRelativeToMediaDir($plotFile);
-        syncPlotFileTarget( $entry->{rms_image} );
-    }
-
-    # this will not be handled as reason for fallback to other detection method
-    if ( $exitCode != 0 ) {
-        my $error = qq{could not analyse and plot "$path" by 'plotRms', exitCode=$exitCode};
-        Log::warn($error);
-        Log::debug( 1, $result );
     }
 
     unless ( defined $entry->{duration} ) {
