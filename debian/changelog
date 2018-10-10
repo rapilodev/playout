@@ -1,3 +1,7 @@
+playout (0.04.0074) bionic; urgency=low
+  * set gzip format to make package portable back to 12.04
+ -- Milan Chrobok <mc@radiopiloten.de>  Wed, 10 Oct 2018 23:00:00 +0200
+
 playout (0.04.0073) bionic; urgency=low
   * add RMS and peak plot in svg using plotRms
  -- Milan Chrobok <mc@radiopiloten.de>  Wed, 21 Sep 2018 08:00:00 +0200
