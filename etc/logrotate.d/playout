@@ -3,6 +3,7 @@
 	daily
 	compress
 	missingok
+	copytruncate
 	postrotate
 	kill -HUP `cat /var/run/playout/playout.pid 2>/dev/null` 2>/dev/null || true
 	endscript
