@@ -367,6 +367,7 @@ sub compare {
             my $error;
             if ( $path =~ /\.stream$/ ) {
                 $entry = parseStreamFile( $path, $entry );
+                next unless $entry;
             } else {
                 $entry = getMetadata( $path, $entry );
                 $entry = analyseAudio( $path, $entry );
@@ -572,7 +573,12 @@ sub parseStreamFile {
     my $result = shift || {};
 
     Log::debug( 1, "parse playlist $filename" );
-    open my $file, '<', $filename;
+    my $file;
+    unless (open ($file, '<', $filename)){
+        Log::warn qq{could not read "$filename"};
+        return undef;
+    };
+    
     while (<$file>) {
         my $line = $_;
         unless ( defined $result->{duration} ) {
