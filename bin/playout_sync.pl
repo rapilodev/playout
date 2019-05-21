@@ -10,6 +10,7 @@ use File::Path ('make_path');
 use File::Copy ();
 use JSON();
 use LWP::UserAgent();
+use HTTP::Date();
 
 use Playout::Playout();
 use Playout::Log();
@@ -45,13 +46,16 @@ Playout::init(
 );
 
 my $syncSourceUrl = Config::get('syncGetScheduleUrl') || '';
-Log::error( "cannot find syncGetScheduleUrl at " . Config::getConfigFile() ) if $syncSourceUrl eq '';
+Log::error( "cannot find syncGetScheduleUrl at " . Config::getConfigFile() )
+  if $syncSourceUrl eq '';
 
 my $syncRecordingUrl = Config::get('syncGetRecordingUrl') || '';
-Log::warn( "cannot find syncGetRecordingUrl at " . Config::getConfigFile() ) if $syncRecordingUrl eq '';
+Log::warn( "cannot find syncGetRecordingUrl at " . Config::getConfigFile() )
+  if $syncRecordingUrl eq '';
 
 my $syncImageSourceUrl = Config::get('syncImageSourceUrl') || '';
-Log::warn( "cannot find syncImageSourceUrl at " . Config::getConfigFile() ) if $syncImageSourceUrl eq '';
+Log::warn( "cannot find syncImageSourceUrl at " . Config::getConfigFile() )
+  if $syncImageSourceUrl eq '';
 
 # add params from and till to sync_source_url
 if ( $from =~ /(\d\d\d\d\-\d\d\-\d\d)/ ) {
@@ -78,7 +82,10 @@ sub filterEvents {
     my $current = {};
     my $results = [];
 
-    @$events = sort { ( $a->{start_datetime} cmp $b->{start_datetime} ) or ( $b->{uploaded_at} cmp $a->{uploaded_at} ) } @$events;
+    @$events = sort {
+        ( $a->{start_datetime} cmp $b->{start_datetime} )
+          or ( $b->{uploaded_at} cmp $a->{uploaded_at} )
+    } @$events;
     for my $event (@$events) {
         my $id    = $event->{event_id};
         my $start = $event->{start_datetime};
@@ -111,10 +118,11 @@ sub synchronizeStorage {
         $currentEvents->{$start}++;
         $event->{current} = $currentEvents->{$start};
 
-        #Log::info( $dir . " $event->{event_id}" . " index:" . $event->{recordingIndex} . " $event->{uploaded_at} " . $event->{key} );
+#Log::info( $dir . " $event->{event_id}" . " index:" . $event->{recordingIndex} . " $event->{uploaded_at} " . $event->{key} );
 
         my $errors = undef;
-        File::Path::make_path( $dir, { group => 'playout', 'chmod' => 2775, error => $errors } ) unless ( -e $dir ) && ( -d $dir );
+        File::Path::make_path( $dir, { group => 'playout', 'chmod' => 2775, error => $errors } )
+          unless ( -e $dir ) && ( -d $dir );
 
         #`chgrp playout '$dir'`;
 
@@ -167,6 +175,23 @@ sub disableRecordingsInDirectory {
     }
 }
 
+# get file age from URL by using HTTP HEAD request
+sub getFileAgeFromUrl {
+    my $userAgent = shift;
+    my $url       = shift;
+
+    #$userAgent->agent("Mozilla/5.0");
+    my $request = new HTTP::Request 'HEAD' => $url;
+    $request->header( 'Accept' => 'text/html' );
+    my $res = $userAgent->request($request);
+    if ( $res->is_success ) {
+        my $lastModified = $res->headers->{'last-modified'};
+        my $date         = HTTP::Date::str2time($lastModified);
+        return time() - $date;
+    }
+    return 0;
+}
+
 sub saveRecording {
     my $userAgent        = shift;
     my $event            = shift;
@@ -176,6 +201,11 @@ sub saveRecording {
     my $filename   = $event->{path};
     my $url        = $syncRecordingUrl . $filename;
     my $targetPath = $dir . '/' . $filename;
+
+    if ( getFileAgeFromUrl( $userAgent, $url ) < 5 * 60 ) {
+        Log::warn("skip download '$targetPath', file has been updated within last 5 minutes");
+        return;
+    }
 
     # check for other entries that are newer
     my $uploadedAt = Time::datetimeToUnixTime( $event->{uploaded_at} );
@@ -188,7 +218,12 @@ sub saveRecording {
     for my $fileType (@$fileTypes) {
         for my $file ( glob( $dir . '/*' . $fileType ) ) {
             my $date = MediaFiles::getFileModificationDate($file);
-            Log::info( sprintf( qq{found %s, date="%s", uploadDate="%s"}, $file, $event->{uploaded_at}, Time::timeToDatetime($date) ) );
+            Log::info(
+                sprintf(
+                    qq{found %s, date="%s", uploadDate="%s"},
+                    $file, $event->{uploaded_at}, Time::timeToDatetime($date)
+                )
+            );
             if ( ( $date != -1 ) && ( $date > $uploadedAt ) ) {
                 Log::warn("skip download '$targetPath', $file is in the same directory, but newer");
                 return;
@@ -323,7 +358,8 @@ sub saveImage {
     my $path      = $dir . "/" . $imageName;
     my $response  = $userAgent->mirror( $url, $path );
     chmod 0664, $path if -f $path;
-    Log::info( "imageUrl='$url', file='$path', result='" . $response->status_line . "'" ) unless $response->{_rc} == 304;
+    Log::info( "imageUrl='$url', file='$path', result='" . $response->status_line . "'" )
+      unless $response->{_rc} == 304;
 }
 
 sub getUsage {

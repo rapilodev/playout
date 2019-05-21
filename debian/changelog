@@ -1,3 +1,11 @@
+playout (0.7) bionic; urgency=medium
+  * skip file download if file has been updated within last 5 minutes
+ -- Milan Chrobok <mc@radiopiloten.de>  Tue, 21 May 2019 22:17:47 +0200
+
+playout (0.6) bionic; urgency=medium
+  * warn and ignore unreadable *.stream files
+ -- Milan Chrobok <mc@radiopiloten.de>  Wed, 08 May 2019 22:14:34 +0200
+
 playout (0.5) bionic; urgency=low
   * enable copytruncate on logrotate
  -- Milan Chrobok <mc@radiopiloten.de>  Thu, 02 May 2019 21:30:00 +0200
