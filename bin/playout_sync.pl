@@ -121,7 +121,7 @@ sub synchronizeStorage {
 #Log::info( $dir . " $event->{event_id}" . " index:" . $event->{recordingIndex} . " $event->{uploaded_at} " . $event->{key} );
 
         my $errors = undef;
-        File::Path::make_path( $dir, { group => 'playout', 'chmod' => 2775, error => $errors } )
+        File::Path::make_path( $dir, { group => 'playout', 'chmod' => 02775, error => $errors } )
           unless ( -e $dir ) && ( -d $dir );
 
         #`chgrp playout '$dir'`;
