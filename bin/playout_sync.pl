@@ -118,13 +118,9 @@ sub synchronizeStorage {
         $currentEvents->{$start}++;
         $event->{current} = $currentEvents->{$start};
 
-#Log::info( $dir . " $event->{event_id}" . " index:" . $event->{recordingIndex} . " $event->{uploaded_at} " . $event->{key} );
-
         my $errors = undef;
         File::Path::make_path( $dir, { group => 'playout', 'chmod' => 02775, error => $errors } )
           unless ( -e $dir ) && ( -d $dir );
-
-        #`chgrp playout '$dir'`;
 
         Log::error($errors) if defined $errors;
         Log::error( "could not create '$dir'. Please make sure:"
@@ -134,8 +130,6 @@ sub synchronizeStorage {
           unless -e $dir;
 
         my $infoFile = $dir . getEventInfoFilename($event);
-
-        #print "$infoFile\n";
 
         # remove other info files
         for my $file ( glob( $dir . '*.info' ) ) {
@@ -244,7 +238,6 @@ sub saveRecording {
     my $temporaryPath = $targetPath . '.temp';
     Log::info("download '$url' to temporary target '$temporaryPath'");
 
-    #my $response = $userAgent->get( $url, ':content_file' => $temporaryPath );
     my $response = $userAgent->mirror( $url, $temporaryPath );
     Log::info( $response->status_line );
 
