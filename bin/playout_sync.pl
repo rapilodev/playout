@@ -67,11 +67,47 @@ if ( $till =~ /(\d\d\d\d\-\d\d\-\d\d)/ ) {
 
 my $currentEvents = {};
 
+my $backupFile = MediaFiles::getMediaDir().'/backup.json';
 my $userAgent = LWP::UserAgent->new;
 Log::debug( 1, "sync_source_url=" . $syncSourceUrl );
 my $events = getEventsFromJson( $userAgent, $syncSourceUrl );
+if (-e $backupFile){
+    my $backups = JSON::decode_json( loadFile($backupFile) );
+    cleanup($backups, $events);
+}
+
 $events = filterEvents($events);
-$events = synchronizeStorage( $events, $syncRecordingUrl, $syncImageSourceUrl );
+synchronizeStorage( $events, $syncRecordingUrl, $syncImageSourceUrl );
+
+saveFile(
+    $backupFile,
+    JSON->new->utf8->pretty->canonical->encode($events)
+);
+
+# look for events from previous run that are not scheduled anymore
+sub cleanup{
+    my $backups = shift;
+    my $events  = shift;
+
+    my $min = $events->[0]->{start_datetime};
+    return unless $min;
+
+    for my $backup (@$backups){
+        next unless $backup->{path};
+        # ignore old events
+        next if $backup->{start_datetime} lt $min;
+        unless ( grep {
+                 $_->{path}
+            && ( $backup->{start_datetime} eq $_->{start_datetime} )
+            && ( $backup->{path}           eq $_->{path} )
+        } @$events ){
+            my $dir  = Time::datetimeToPath( MediaFiles::getMediaDir(), $event->{start_datetime} );
+            my $file = $dir . '/' . $backup->{path};
+            Log::warn("cleanup: $file' is outdated");
+            File::Copy::move( $file, $file . '.moved.off' );
+        }
+    }
+}
 
 # filter events ascending by start
 # filter events descending by upload date
