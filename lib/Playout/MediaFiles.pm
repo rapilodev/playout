@@ -699,7 +699,11 @@ sub applyGain {
     my $path  = shift;
     my $entry = shift;
 
-    return unless $path =~ /\.mp3$/;
+    unless ($path =~ /\.mp3$/){
+        Log::debug( 2, "do not apply mp3gain because file is no mp3 file" );
+        return $entry;
+    };
+
     my $command = getGainCommand();
     unless ( defined $command ) {
         Log::debug( 2, "do not apply mp3gain due to 'gainCommand' is not configured" );
