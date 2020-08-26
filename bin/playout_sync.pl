@@ -101,7 +101,7 @@ sub cleanup{
             && ( $backup->{start_datetime} eq $_->{start_datetime} )
             && ( $backup->{path}           eq $_->{path} )
         } @$events ){
-            my $dir  = Time::datetimeToPath( MediaFiles::getMediaDir(), $event->{start_datetime} );
+            my $dir  = Time::datetimeToPath( MediaFiles::getMediaDir(), $backup->{start_datetime} );
             my $file = $dir . '/' . $backup->{path};
             Log::warn("cleanup: $file' is outdated");
             File::Copy::move( $file, $file . '.moved.off' );
