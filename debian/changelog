@@ -1,3 +1,15 @@
+playout (0.10.3) bionic; urgency=medium
+  * new: playout-light.pl : simple download and playout using liquidsoap schedule
+ -- Milan Chrobok <mc@radiopiloten.de>  Sun, 27 Aug 2020 21:05:18 +0200
+
+playout (0.9.1) bionic; urgency=medium
+  * fix file download
+ -- Milan Chrobok <mc@radiopiloten.de>  Wed, 26 Aug 2020 21:05:18 +0200
+
+playout (0.9) bionic; urgency=medium
+  * fix flac support
+ -- Milan Chrobok <mc@radiopiloten.de>  Sun, 16 Aug 2020 20:05:18 +0200
+
 playout (0.8) bionic; urgency=medium
   * fix file permissions on creating directories 
  -- Milan Chrobok <mc@radiopiloten.de>  Sun, 02 Jun 2019 21:05:18 +0200
