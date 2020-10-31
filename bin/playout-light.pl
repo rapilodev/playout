@@ -146,7 +146,7 @@ sub get_script($$$$) {
         my $file = find_file( $entry, $dirs, $files );
         my ( $sh, $sm ) = split( /\:/, $entry->{start_time}, 2 );
         my ( $eh, $em ) = split( /\:/, $entry->{end_time},   2 );
-        push @shows, sprintf "%s%s ( { _%d_%d_%d_%d-_%d_%d_%d_%d }, %s )\n",
+        push @shows, sprintf "%s%s ( { %dw%dh%dm%ds-%dw%dh%dm%ds }, %s )\n",
           $active && $file ? ', ' : '  ',
           $file            ? ' '  : '#',
           $entry->{start_weekday}, $sh, $sm, 0,
