@@ -13,6 +13,8 @@ use Getopt::Long();
 use JSON();
 use HTTP::Request();
 use LWP::UserAgent();
+use FindBin;
+chdir $FindBin::Bin;
 
 use utf8;
 use feature "say";
@@ -34,6 +36,12 @@ use open ':std', ':encoding(UTF-8)';
 #     syncImageSourceUrl  https://<domain>/agenda_files/media/images/
 #     streamTarget        host="localhost", port=8000, user="liquidsoap", password="changeme", mount="/<stream>"
 # </config>
+
+
+# one instance only
+use Fcntl qw(:flock);
+open our $file, '<', $0 or die $!;
+flock $file, LOCK_EX|LOCK_NB or die "skip start, script is already running\n.";
 
 sub get_date_time {
     my $time = time;
