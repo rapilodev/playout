@@ -163,6 +163,17 @@ $shows
             ]
         );
         radio = mksafe (radio);
+
+        radio= fallback(
+            id="fallback",
+            track_sensitive=false,
+            [
+                fail(),
+                strip_blank(id="silence", max_blank=60., threshold=-50., radio ) ,
+                mksafe(single(id="silence", "fallback.mp3"))
+            ]
+        )
+
         output.icecast(
             %mp3(bitrate=192),
             $icecast,
