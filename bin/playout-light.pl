@@ -43,6 +43,10 @@ use Fcntl qw(:flock);
 open our $file, '<', $0 or die $!;
 flock $file, LOCK_EX|LOCK_NB or die "skip start, script is already running\n.";
 
+# stop after 7 days to reload
+my $DAYS = 24 * 60 * 60;
+alarm 7 * $DAYS;
+
 sub get_date_time {
     my $time = time;
     ( my $sec, my $min, my $hour, my $day, my $month, my $year ) = localtime($time);
