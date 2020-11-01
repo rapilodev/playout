@@ -11,6 +11,7 @@ use File::Copy ();
 use JSON();
 use LWP::UserAgent();
 use HTTP::Date();
+use HTTP::Request::Common;
 
 use Playout::Playout();
 use Playout::Log();
@@ -53,6 +54,14 @@ my $syncRecordingUrl = Config::get('syncGetRecordingUrl') || '';
 Log::warn( "cannot find syncGetRecordingUrl at " . Config::getConfigFile() )
   if $syncRecordingUrl eq '';
 
+my $syncRecordingAccess = Config::get('syncGetRecordingAccess');
+if ($syncRecordingAccess){
+    my @kv = split (':', $syncRecordingAccess, 2);
+    $syncRecordingAccess = \@kv;
+}else{
+    Log::warn( "cannot find syncGetRecordingAccess at " . Config::getConfigFile() )
+}
+
 my $syncImageSourceUrl = Config::get('syncImageSourceUrl') || '';
 Log::warn( "cannot find syncImageSourceUrl at " . Config::getConfigFile() )
   if $syncImageSourceUrl eq '';
@@ -77,7 +86,7 @@ if (-e $backupFile){
 }
 
 $events = filterEvents($events);
-synchronizeStorage( $events, $syncRecordingUrl, $syncImageSourceUrl );
+synchronizeStorage( $events, $syncRecordingUrl, $syncRecordingAccess, $syncImageSourceUrl );
 
 saveFile(
     $backupFile,
@@ -144,6 +153,7 @@ sub filterEvents {
 sub synchronizeStorage {
     my $events             = shift;
     my $syncRecordingUrl   = shift;
+    my $syncRecordingAccess= shift;
     my $syncImageSourceUrl = shift;
 
     for my $event (@$events) {
@@ -187,7 +197,7 @@ sub synchronizeStorage {
         saveImage( $userAgent, $imageUrl, $dir );
 
         #save upload
-        saveRecording( $userAgent, $event, $syncRecordingUrl, $dir ) if defined $event->{path};
+        saveRecording( $userAgent, $event, $syncRecordingUrl, $syncRecordingAccess, $dir ) if defined $event->{path};
     }
 }
 
@@ -209,30 +219,85 @@ sub disableRecordingsInDirectory {
 sub getFileAgeFromUrl {
     my $userAgent = shift;
     my $url       = shift;
+    my $access    = shift;
 
-    #$userAgent->agent("Mozilla/5.0");
-    my $request = new HTTP::Request 'HEAD' => $url;
+    my $request = new HTTP::Request( 'HEAD' => $url);
     $request->header( 'Accept' => 'text/html' );
+    $request->authorization_basic( @$access) if $access;
     my $res = $userAgent->request($request);
     if ( $res->is_success ) {
         my $lastModified = $res->headers->{'last-modified'};
         my $date         = HTTP::Date::str2time($lastModified);
         return time() - $date;
     }
+    Log::error "failed to fetch HEAD $url: ".$res->message."\n";
     return 0;
 }
+
+# From userAgent, added setting authentication
+sub mirror{
+    my($user_agent, $url, $access, $file) = @_;
+
+    die "Local file name is missing" unless defined $file && length $file;
+    my $request = HTTP::Request->new('GET', $url);
+
+    # If the file exists, add a cache-related header
+    if ( -e $file ) {
+        my ($mtime) = ( stat($file) )[9];
+        $request->header( 'If-Modified-Since' => HTTP::Date::time2str($mtime) ) if $mtime;
+    }
+    $request->authorization_basic(@$access) if $access;
+    my $tmpfile = "$file-$$";
+    my $response = $user_agent->request($request, $tmpfile);
+    die $response->header('X-Died') if $response->header('X-Died');
+
+    # Only fetching a fresh copy of the file would be considered success.
+    # If the file was not modified, "304" would returned, which
+    # is considered by HTTP::Status to be a "redirect", /not/ "success"
+    if ( $response->is_success ) {
+        my @stat        = stat($tmpfile) or die "Could not stat tmpfile '$tmpfile': $!";
+        my $file_length = $stat[7];
+        my ($content_length) = $response->header('Content-length');
+
+        if ( defined $content_length and $file_length < $content_length ) {
+            unlink($tmpfile);
+            die "Transfer truncated: " . "only $file_length out of $content_length bytes received\n";
+        } elsif ( defined $content_length and $file_length > $content_length ) {
+            unlink($tmpfile);
+            die "Content-length mismatch: " . "expected $content_length bytes, got $file_length\n";
+        } else { # The file was the expected length.
+            # Replace the stale file with a fresh copy
+            if ( -e $file ) {
+                chmod 0777, $file;
+                unlink $file;
+            }
+            rename( $tmpfile, $file ) or die "Cannot rename '$tmpfile' to '$file': $!\n";
+
+            # make sure the file has the same last modification time
+            if ( my $lm = $response->last_modified ) {
+                utime $lm, $lm, $file;
+            }
+        }
+    } else {
+        # The local copy is fresh enough, so just delete the temp file
+        unlink($tmpfile);
+    }
+    return $response;
+}
+
 
 sub saveRecording {
     my $userAgent        = shift;
     my $event            = shift;
     my $syncRecordingUrl = shift;
+    my $access           = shift;
     my $dir              = shift;
 
     my $filename   = $event->{path};
     my $url        = $syncRecordingUrl . $filename;
     my $targetPath = $dir . '/' . $filename;
 
-    if ( getFileAgeFromUrl( $userAgent, $url ) < 5 * 60 ) {
+    if ( getFileAgeFromUrl( $userAgent, $url, $access ) < 5 * 60 ) {
         Log::warn("skip download '$targetPath', file has been updated within last 5 minutes");
         return;
     }
@@ -274,7 +339,7 @@ sub saveRecording {
     my $temporaryPath = $targetPath . '.temp';
     Log::info("download '$url' to temporary target '$temporaryPath'");
 
-    my $response = $userAgent->mirror( $url, $temporaryPath );
+    my $response = mirror( $userAgent, $url, $access, $temporaryPath );
     Log::info( $response->status_line );
 
     if ( ( $response->is_success ) || ( $response->{_rc} == 304 ) ) {
@@ -385,7 +450,7 @@ sub saveImage {
 
     my $imageName = ( split( /\//, $url ) )[-1];
     my $path      = $dir . "/" . $imageName;
-    my $response  = $userAgent->mirror( $url, $path );
+    my $response  = mirror( $userAgent, $url, '', $path );
     chmod 0664, $path if -f $path;
     Log::info( "imageUrl='$url', file='$path', result='" . $response->status_line . "'" )
       unless $response->{_rc} == 304;
@@ -436,6 +501,7 @@ A text file .info and the downloaded image will be put into each directory.
 if you put audio files at a directory, playout will play them at scheduled time.
 
 If the source contains links to remote audio files there will be downloaded relative to <syncGetRecordingUrl>.
+Optionally basic authentication can be used as "user:password" in <syncGetRecordingUrl>.
 Events require fields <uploaded_at> with timestamp and <path> with an relative path.  
 
 |;
