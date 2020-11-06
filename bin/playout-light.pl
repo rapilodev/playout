@@ -14,7 +14,6 @@ use JSON();
 use HTTP::Request();
 use LWP::UserAgent();
 use FindBin;
-chdir $FindBin::Bin;
 
 use utf8;
 use feature "say";
@@ -234,9 +233,11 @@ my $script = get_script( $slots, $dirs, $files, $icecast );
 
 # save script
 my $script_name = 'replay.liq';
-open my $fh, '>', $script_name;
+open my $fh, '>', $script_name or die "$!";
 print $fh $script;
 close $fh;
 
 # start script
-execute( [ "liquidsoap", $script_name ] );
+my $liquidsoap = qx{which liquidsoap};
+chomp $liquidsoap;
+execute( [ $liquidsoap, $script_name ] );

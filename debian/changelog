@@ -1,3 +1,7 @@
+playout (0.11.1) bionic; urgency=medium
+  * playout-light.pl: do not change directory
+ -- Milan Chrobok <mc@radiopiloten.de>  Sat, 7 Nov 2020 21:05:18 +0200
+
 playout (0.11) bionic; urgency=medium
   * playout_sync: support basic authentication by syncGetRecordingAccess
  -- Milan Chrobok <mc@radiopiloten.de>  Sun, 1 Nov 2020 21:05:18 +0200
