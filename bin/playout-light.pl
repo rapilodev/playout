@@ -36,11 +36,10 @@ use open ':std', ':encoding(UTF-8)';
 #     streamTarget        host="localhost", port=8000, user="liquidsoap", password="changeme", mount="/<stream>"
 # </config>
 
-
 # one instance only
 use Fcntl qw(:flock);
 open our $file, '<', $0 or die $!;
-flock $file, LOCK_EX|LOCK_NB or die "skip start, script is already running\n.";
+flock $file, LOCK_EX|LOCK_NB or die "skip start, script is already running.\n";
 
 # stop after 7 days to reload
 my $DAYS = 24 * 60 * 60;
