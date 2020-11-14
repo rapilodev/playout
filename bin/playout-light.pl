@@ -32,13 +32,14 @@ use open ':std', ':encoding(UTF-8)';
 # * plus streamTarget containing liquidsoap icecast stream config
 #
 # <config>
-#     mediaDir            /mnt/archive/<stream>/
+#     mediaDir            /mnt/archive/<project>/
 #     tempDir             /var/tmp/
 #     timeZone            Europe/Berlin
 #     syncGetScheduleUrl  https://<domain>/agenda/all-events.cgi?project_id=x&studio_id=y&recordings=1&template=json-p
 #     syncGetRecordingUrl https://<domain>/agenda_files/recordings/
 #     syncImageSourceUrl  https://<domain>/agenda_files/media/images/
 #     streamTarget        host="localhost", port=8000, user="liquidsoap", password="changeme", mount="/<stream>"
+#     fallback            /mnt/archive/<project>/fallback.mp3
 # optional:
 #     syncGetRecordingAccess  user:password
 #     syncSetScheduleUrl  https://<domain>/agenda/upload_playout.cgi?project_id=x&studio_id=y
@@ -161,11 +162,12 @@ sub find_file($$$) {
     return undef;
 }
 
-sub get_script($$$$) {
+sub get_script($$$$$) {
     my $entries = shift;
     my $dirs    = shift;
     my $files   = shift;
     my $icecast = shift;
+    my $fallback = shift;
 
     my @shows  = ();
     my $active = 0;
@@ -199,7 +201,7 @@ $shows
             [
                 fail(),
                 strip_blank(id="silence", max_blank=60., threshold=-50., radio ) ,
-                mksafe(single(id="silence", "fallback.mp3"))
+                mksafe(single(id="silence", "$fallback"))
             ]
         )
 
@@ -247,13 +249,12 @@ Playout::init({ configFile => $config_file});
 my $updateAudio = MediaFiles::fullScan( { expires => [ time + 15 * 60, Shows::getNextStart() ] } );
 Upload::fullUpload() if $updateAudio > 0;
 
-
 # get events from server
 my $events = get_events($url);
 my $slots  = filter_events($events);
 #
 my $files  = get_files($dirs);
-my $script = get_script( $slots, $dirs, $files, $icecast );
+my $script = get_script( $slots, $dirs, $files, $icecast, $config->{fallback} );
 
 # save script
 my $script_name = 'replay.liq';
