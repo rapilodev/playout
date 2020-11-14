@@ -15,6 +15,10 @@ use HTTP::Request();
 use LWP::UserAgent();
 use FindBin;
 
+use Playout::Playout();
+use Playout::MediaFiles();
+use Playout::Upload();
+
 use utf8;
 use feature "say";
 use open ':std', ':encoding(UTF-8)';
@@ -29,11 +33,17 @@ use open ':std', ':encoding(UTF-8)';
 #
 # <config>
 #     mediaDir            /mnt/archive/<stream>/
+#     tempDir             /var/tmp/
 #     timeZone            Europe/Berlin
-#     syncGetScheduleUrl  https://<domain>/agenda/events.cgi?recordings=1&template=json-p
+#     syncGetScheduleUrl  https://<domain>/agenda/all-events.cgi?project_id=x&studio_id=y&recordings=1&template=json-p
 #     syncGetRecordingUrl https://<domain>/agenda_files/recordings/
 #     syncImageSourceUrl  https://<domain>/agenda_files/media/images/
 #     streamTarget        host="localhost", port=8000, user="liquidsoap", password="changeme", mount="/<stream>"
+# optional:
+#     syncGetRecordingAccess  user:password
+#     syncSetScheduleUrl  https://<domain>/agenda/upload_playout.cgi?project_id=x&studio_id=y
+#     syncPlotTargetDir   user@<domain>:<dir>/
+#     syncImageSourceUrl  https://<domain>/agenda_files/media/images/
 # </config>
 
 my $started;
@@ -231,6 +241,12 @@ my $icecast = $config->{streamTarget} or die "missing streamTarget in config";
 
 # get audio files from server
 execute( [ "playout_sync.pl", "--config", "$config_file" ] );
+
+# scan files and upload playout entries
+Playout::init({ configFile => $config_file});
+my $updateAudio = MediaFiles::fullScan( { expires => [ time + 15 * 60, Shows::getNextStart() ] } );
+Upload::fullUpload() if $updateAudio > 0;
+
 
 # get events from server
 my $events = get_events($url);
