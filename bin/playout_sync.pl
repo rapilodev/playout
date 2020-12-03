@@ -26,11 +26,13 @@ my $from       = '';
 my $till       = '';
 my $verbose    = undef;
 my $help       = undef;
+my $no_images  = undef;
 
 Getopt::Long::GetOptions(
     "config=s"  => \$configFile,
     "from=s"    => \$from,
     "till=s"    => \$till,
+    "no-images" => \$no_images,
     "verbose=i" => \$verbose,
     "help"      => \$help
 );
@@ -191,10 +193,12 @@ sub synchronizeStorage {
             saveFile( $infoFile, $content );
         }
 
-        #save event image
-        my $imageUrl = $event->{image};
-        $imageUrl = $syncImageSourceUrl . $event->{image} if $syncImageSourceUrl ne '';
-        saveImage( $userAgent, $imageUrl, $dir );
+        unless ($no_images){
+            #save event image
+            my $imageUrl = $event->{image};
+            $imageUrl = $syncImageSourceUrl . $event->{image} if $syncImageSourceUrl ne '';
+            saveImage( $userAgent, $imageUrl, $dir );
+        }
 
         #save upload
         saveRecording( $userAgent, $event, $syncRecordingUrl, $syncRecordingAccess, $dir ) if defined $event->{path};
