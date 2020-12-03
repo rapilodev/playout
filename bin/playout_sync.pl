@@ -464,26 +464,30 @@ sub getUsage {
     return qq|
 usage: $0 --from yyyy-mm-dd --till yyyy-mm-dd --verbose [level]
 
-playout_sync.pl imports events from an external data source. 
-playout_sync.pl will create all the neccessary directories (containing date and time in the path).
-After directories got created, you only need to put audio files into directories to play them.
+playout_sync.pl imports events from an external data source. It creates all 
+necessary directories (with date and time in the path). After the directories 
+have been created, only the audio files have to be put into the directories to 
+schedule them for playback.
 
-Events are read from an JSON source <syncGetScheduleUrl> configured at /etc/playout/playout.conf
-One can filter the date range by using parameters --from and --till which append '&from_date=yyyy-mm-dd' and '&till_date=yyyy-mm-dd' to the URL.
+The dates are read from a JSON source <syncGetScheduleUrl> configured in 
+/etc/playout/playout.conf. You can filter the date range by using the --from 
+and --till parameters, which in turn append '&from_date=yyyy-mm-dd' and 
+'&till_date=yyyy-mm-dd' to the URL.
 
-media archive directory should have group playout, permissions 775 and have the group setgid bit set.
-The user should be added to group playout.
+The media archive directory should have group playout, permissions 775 and the 
+group setgid bit set. The user should be added to the group playout.
 
 chgrp playout /mnt/archive/playout
 chmod g+s /mnt/archive/playout
 
-The URL response document should consist of an "events"-list of single playout events.
-Directories will be created from event attribute "start_datetime" attribute [yyyy-mm-ddThh:mm:ss].
-Attributes "series_name", "title", "event_id" are used to build a text info filename.
-Each info file contains the attributes "excerpt", "content", "location".
-If an "image" URL attribute is given, the image will be downloaded and put into the directory.
+The URL response document should consist of an "Events" list of individual 
+playout events. Directories are created from the event attribute 
+"start_datetime" attribute [yyyyy-mm-ddThh:mm:ss]. The "series_name", "title", 
+"event_id" attributes are used to create a text info file name. Each info file 
+contains the attributes "extract", "content", "location". If a URL attribute 
+"image" is specified, the image is downloaded and placed in the directory.
 
-Example source JSON document:
+Example of a JSON source document:
 {
     "events":[
         {
