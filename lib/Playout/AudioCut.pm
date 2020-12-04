@@ -134,15 +134,14 @@ cut end:      $cutPoints->{end}
     return $cutPoints;
 }
 
-# split mp3/ogg/flac file from start to end using mp3splt
-# see http://mp3splt.sourceforge.net/mp3splt_page/home.php
-# return file name
+# split audio file from start to end using ffmpeg
+# return file path
 sub cut {
     my $filename  = shift;
     my $cutPoints = shift;
 
     my $outFile = getCutFilename( $filename, $outputDirectory, $cutPoints );
-    return mp3splt( $filename, $outFile, $cutPoints );
+    return splitAudio( $filename, $outFile, $cutPoints );
 }
 
 sub removeOldFiles {
@@ -180,7 +179,6 @@ sub getCutFilename {
     }
 
     if ( $dir ne '' ) {
-
         #remove multiple trailing slashes from output directory
         $dir =~ s/\/+$//g;
         $dir .= '/';
@@ -190,62 +188,37 @@ sub getCutFilename {
     my $extension = '.' . ( split( /\./, $filename ) )[-1];
     $filename =~ s/$extension//g;
 
-    return {
-        dir       => $dir,
-        file      => 'playout_' . $filename . '-cut-' . $cutPoints->{start} . '-' . $cutPoints->{end},
-        extension => $extension
-    };
+    return $dir . 'playout_' . $filename . '-cut-' . $cutPoints->{start} . '-' . $cutPoints->{end}.$extension
 }
 
 # cut file into outFile (dir,file,ext) for given cutPoints (start,end)
 # return full path of output
-sub mp3splt {
+sub splitAudio {
     my $inFile    = shift;
     my $outFile   = shift;
     my $cutPoints = shift;
 
-    my $startCut = secondsToMp3splt( $cutPoints->{start} );
-    my $endCut   = secondsToMp3splt( $cutPoints->{end} );
+    my $startCut = secondsToHMS( $cutPoints->{start} );
+    my $endCut   = secondsToHMS( $cutPoints->{end} );
 
-    # separate option by directory and file
-    my $options = '';
-    $options = "-d $outFile->{dir}" if $outFile->{dir} ne '';
-
-    #mp3splt will extend file by extension automatically...
-    my $cmd = qq{mp3splt '$inFile' "$startCut" "$endCut" -o '$outFile->{file}' $options -Q};
+    my $cmd = qq{ffmpeg -vn -nostdin -i '$inFile' -c copy -ss "$startCut" -to "$endCut" '$outFile'};
     Log::debug( 1, $cmd );
     my ( $result, $exitCode ) = Process::execute($cmd);
-
-    #return full path
-    my $path = $outFile->{dir} . $outFile->{file} . $outFile->{extension};
 
     #escape ' in filename
-    $path =~ s/\'/\'\\\'\'/g;
-    Log::debug( 1, "cutted file='$path'" );
-    return $path;
+    $outFile =~ s/\'/\'\\\'\'/g;
+    Log::debug( 1, "cutted file='$outFile'" );
+    return $outFile;
 }
 
-#get audio file duration using mp3info
-#see http://ibiblio.org/mp3info/
-sub getFileDuration {
-    my $filename = shift;
-    $filename =~ s/\'/\'\\\'\'/g;
-
-    my $cmd = qq{mp3info -p '%S' '$filename'};
-    Log::debug( 1, $cmd );
-    my ( $result, $exitCode ) = Process::execute($cmd);
-    $result =~ s/\s+//g;
-    return -1 unless $result =~ /^\d+$/;
-    return $result;
-}
-
-#convert seconds to mp3splt parameter time format "min.sec"
-sub secondsToMp3splt {
+sub secondsToHMS {
     my $time = shift;
-    my $min  = int( $time / 60 );
-    $time -= $min * 60;
-    my $sec = $time;
-    return "$min.$sec";
+    my $hours  = int( $time / 3600 );
+    $time -= $hours * 60;
+    my $mins  = int( $time / 60 );
+    $time -= $mins * 60;
+    my $secs = $time;
+    return sprintf "%02d:%02d:%02d", $hours, $mins, $secs;
 }
 
 # do not delete last line
