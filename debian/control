@@ -22,7 +22,7 @@ Depends: ${misc:Depends}, ${perl:Depends},
 	 libxml-libxml-simple-perl,
 	 libwww-perl,
 	 libsox-fmt-mp3,
-	 mp3splt,
+	 ffmpeg,
 	 sox
 Recommends: rms, playout-liquidsoap, pulseaudio, vlc-nox, m3gain
 Description: play audio files scheduled by its location on disk.
