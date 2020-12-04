@@ -43,8 +43,7 @@ sub init {
     $cache = readCache();
 
     # check if rms plot is supported
-    my $command = qq{which plotRms};
-    my ( $result, $exitCode ) = Process::execute( $command . ' 2>&1' );
+    my ( $result, $exitCode ) = Process::execute( 'which plotRms 2>&1' );
     $usePlot = 1 if $exitCode == 0;
     setSyncPlotTargetDir( $options->{syncPlotTargetDir} ) if defined $options->{syncPlotTargetDir};
 }
@@ -250,9 +249,6 @@ sub compare {
 
     my $cache = $options->{cache};
     my $files = $options->{files};
-
-    #print STDERR "files: ".Dumper($files);
-    #print STDERR "cache: ".Dumper($cache);
 
     # set path to optional date
     my $dir  = undef;
@@ -776,8 +772,7 @@ sub getDataFromPlotRms {
     for my $suffix ( 'png', 'svg' ) {
         my $imageFile = "$targetDir/$targetFile.$suffix";
 
-        my $command = "plotRms -i '$path' -o '$imageFile'";
-        ( $result, my $exitCode ) = Process::execute( $command . ' 2>&1' );
+        ( $result, my $exitCode ) = Process::execute( "plotRms -i '$path' -o '$imageFile'" . ' 2>&1' );
 
         # this will not be handled as reason for fallback to other detection method
         if ( $exitCode != 0 ) {
@@ -820,8 +815,7 @@ sub getDurationFromSoxi {
     my $error = "could not get duration from soxi";
     Log::info(qq{get audio duration for "$path" from soxi});
     if ( $path =~ /\.(mp3|flac)$/i ) {
-        my $command = qq{soxi -D '$path'};
-        my ( $result, $exitCode ) = Process::execute( $command . ' 2>&1' );
+        my ( $result, $exitCode ) = Process::execute( qq{soxi -D '$path'} . ' 2>&1' );
 
         if ( $result =~ /([\d\.]+)/ ) {
             $entry->{duration} = $1;
@@ -857,8 +851,7 @@ sub syncPlotFileTarget {
         return;
     }
 
-    my $command = "rsync -avR '" . $sourceFile . "' '" . $syncPlotTargetDir . "'";
-    my ( $result, $exitCode ) = Process::execute( $command . ' 2>&1' );
+    my ( $result, $exitCode ) = Process::execute( "rsync -avR '" . $sourceFile . "' '" . $syncPlotTargetDir . "'" . ' 2>&1' );
     Log::warn(qq{could not copy "$mediaDir/$sourceFile" to "$syncPlotTargetDir": "$result"}) if ( $exitCode != 0 );
 }
 
