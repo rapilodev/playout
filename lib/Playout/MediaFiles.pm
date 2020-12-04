@@ -24,7 +24,6 @@ my $shortScanInterval = 0;
 my $lastShortScan     = 0;
 my $usePlot           = 0;
 my $syncPlotTargetDir = undef;
-my $gainCommand       = undef;
 my $userInfo          = undef;
 
 my $supportedFormats = [ '.ogg', '.mp3', '.wav', '.flac', '.aac', '.aiff', '.m4a', '.m4b', '.mpc', '.oga', '.opus', '.stream' ];
@@ -70,14 +69,6 @@ sub setMediaDir {
 
 sub getMediaDir {
     return $mediaDir;
-}
-
-sub setGainCommand {
-    $gainCommand = shift;
-}
-
-sub getGainCommand {
-    return $gainCommand;
 }
 
 sub getNextFullScan {
@@ -367,7 +358,6 @@ sub compare {
             } else {
                 $entry = getMetadata( $path, $entry );
                 $entry = analyseAudio( $path, $entry );
-                $entry = applyGain( $path, $entry );
             }
 
             $entry->{end_epoch} = $entry->{start_epoch} + int( 0.5 + $entry->{duration} )
@@ -690,56 +680,6 @@ sub analyseAudio {
     return $entry;
 }
 
-# return entry, error
-sub applyGain {
-    my $path  = shift;
-    my $entry = shift;
-
-    unless ($path =~ /\.mp3$/){
-        Log::debug( 2, "do not apply mp3gain because file is no mp3 file" );
-        return $entry;
-    };
-
-    my $command = getGainCommand();
-    unless ( defined $command ) {
-        Log::debug( 2, "do not apply mp3gain due to 'gainCommand' is not configured" );
-        return $entry;
-    }
-
-    my $error     = undef;
-    my $targetDir = File::Basename::dirname($path);
-    unless ( -w $targetDir ) {
-        Log::error("applyGain(): cannot write to directory '$targetDir'. Please check permissions.");
-        Log::error( getUserInfo() );
-        return $entry;
-    }
-
-    chmod 0664, $path;
-    unless ( -w $path ) {
-        Log::error("applyGain(): cannot write to file '$path'. Please check permissions.");
-        return $entry;
-    }
-    $command =~ s/AUDIO_FILE/\'$path\'/g;
-    my ( $result, $exitCode ) = Process::execute( $command . ' 2>&1' );
-    Log::debug( 2, "$result" );
-    if ( $exitCode != 0 ) {
-        my $error = qq{could not apply mp3gain to "$path" by "$command", exitCode=$exitCode};
-        Log::error($error);
-        Log::debug( 1, $result );
-    }
-
-    if ( $result =~ /gain change of ([\-0-9]+) to/ ) {
-        my $replayGain = $1;
-        Log::debug( 1, "found replay gain of $replayGain" );
-        $entry->{replay_gain} = $replayGain;
-    }
-
-    Log::debug( 2, "update modification date of $path" );
-    my $modifiedAt = getFileModificationDate($path);
-    $entry->{modified_at} = $modifiedAt;
-
-    return $entry;
-}
 
 sub getDataFromPlotRms {
 

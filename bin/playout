@@ -78,10 +78,8 @@ sub query {
 
         my $rmsLeft    = undef;
         my $rmsRight   = undef;
-        my $replayGain = undef;
         $rmsLeft    = $cache->{$file}->{rms_left}    if defined $cache->{$file}->{rms_left};
         $rmsRight   = $cache->{$file}->{rms_right}   if defined $cache->{$file}->{rms_right};
-        $replayGain = $cache->{$file}->{replay_gain} if defined $cache->{$file}->{replay_gain};
 
         $result->{$date}->{$start} = {
             start       => $start,
@@ -90,7 +88,6 @@ sub query {
             title       => $title,
             rmsLeft     => $rmsLeft,
             rmsRight    => $rmsRight,
-            replay_gain => $replayGain
         };
     }
 
@@ -128,10 +125,8 @@ sub query {
                 printf( "%20s %-10s %s\n", '', "duration", Time::secondsToTime( $info->{duration} ) );
                 $lines++;
             }
-            my $replayGain = '';
-            $replayGain = sprintf( ", replayGain:%s", $info->{replayGain} ) if defined $info->{replayGain};
             if ( ( defined $info->{rmsLeft} ) && ( defined $info->{rmsRight} ) ) {
-                printf( "%20s %-10s left %s dB, right %s dB%s\n", '', "RMS", $info->{rmsLeft}, $info->{rmsRight}, $replayGain );
+                printf( "%20s %-10s left %s dB, right %s dB\n", '', "RMS", $info->{rmsLeft}, $info->{rmsRight} );
                 $lines++;
             }
             print "\n" if $lines > 1;

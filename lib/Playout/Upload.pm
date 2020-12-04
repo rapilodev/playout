@@ -81,7 +81,6 @@ sub upload {
                 rms_left        => $event->{rms_left},
                 rms_right       => $event->{rms_right},
                 rms_image       => $event->{rms_image},
-                replay_gain     => $event->{replay_gain},
                 errors          => $event->{errors}
               };
         }

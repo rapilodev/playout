@@ -101,6 +101,7 @@ sub stop {
     return;
 }
 
+# todo: use open and arrays
 sub execute {
     my $cmd = shift;
 

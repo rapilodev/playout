@@ -327,7 +327,6 @@ sub updateConfig {
 	MediaFiles::setShortScanInterval( $config->{shortScanInterval} );
 	MediaFiles::setFullScanInterval( $config->{fullScanInterval} );
 	MediaFiles::setSyncPlotTargetDir( $config->{syncPlotTargetDir} );
-	MediaFiles::setGainCommand( $config->{gainCommand} );
 	Log::debug( 2, "setUrl:$config->{syncSetScheduleUrl}" ) if defined $config->{syncSetScheduleUrl};
 	Upload::setUrl( $config->{syncSetScheduleUrl} );
 
