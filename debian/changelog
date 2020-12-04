@@ -1,3 +1,9 @@
+playout (0.13) bionic; urgency=medium
+  * replace mp3splt by ffmeg
+  * remove mp3gain
+  * playout_sync.pl: add option --no-images
+ -- Milan Chrobok <mc@radiopiloten.de>  Sat, 5 Dec 2020 21:05:18 +0200
+
 playout (0.12.1) bionic; urgency=medium
   * playout-light.pl: scan audio files and upload metadata to calcms server
  -- Milan Chrobok <mc@radiopiloten.de>  Sat, 14 Nov 2020 21:05:18 +0200
