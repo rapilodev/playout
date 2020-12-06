@@ -1,3 +1,7 @@
+playout (0.14) bionic; urgency=medium
+  * replace cvlc by ffmpeg
+ -- Milan Chrobok <mc@radiopiloten.de>  Sun, 6 Dec 2020 21:05:18 +0200
+
 playout (0.13) bionic; urgency=medium
   * replace mp3splt by ffmeg
   * remove mp3gain
