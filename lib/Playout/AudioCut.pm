@@ -201,7 +201,7 @@ sub splitAudio {
     my $startCut = secondsToHMS( $cutPoints->{start} );
     my $endCut   = secondsToHMS( $cutPoints->{end} );
 
-    my $cmd = qq{ffmpeg -vn -nostdin -i '$inFile' -c copy -ss "$startCut" -to "$endCut" '$outFile'};
+    my $cmd = qq{ffmpeg -vn -sn -nostdin -hide_banner -loglevel warning -i '$inFile' -c copy -ss "$startCut" -to "$endCut" '$outFile'};
     Log::debug( 1, $cmd );
     my ( $result, $exitCode ) = Process::execute($cmd);
 
