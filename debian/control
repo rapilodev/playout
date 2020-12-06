@@ -2,7 +2,7 @@ Source: playout
 Section: sound
 Priority: optional
 Maintainer: Milan Chrobok <mc@radiopiloten.de>
-Build-Depends: debhelper (>= 9)
+Build-Depends: debhelper (>= 10)
 Build-Depends-Indep: perl
 Standards-Version: 4.1.4
 Homepage: https://launchpad.net/~mc-1/+archive/playout
