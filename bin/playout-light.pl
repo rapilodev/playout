@@ -170,7 +170,9 @@ sub get_script($$$$$) {
 
     my @shows  = ();
     my $active = 0;
+    my $done   = {};
     for my $entry (@$entries) {
+        next if $done->{$entry->{start_time}};
         my $title = $entry->{series_name} . " " . $entry->{episode};
         $title =~ s/\"//g;
         my $file = find_file( $entry, $dirs, $files );
@@ -183,6 +185,7 @@ sub get_script($$$$$) {
           $entry->{end_weekday},   $eh, $em, 0,
           $file ? qq{single("$file")} : qq{say("$title")};
         $active++ if $file;
+        $done->{$entry->{start_time}}++;
     }
 
     my $shows = join '', @shows;
