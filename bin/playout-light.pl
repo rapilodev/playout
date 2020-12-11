@@ -131,7 +131,7 @@ sub get_files {
             my $file = $File::Find::name;
             if ( !-f $file ) {
                 return;
-            } elsif ( $file =~ /\.(mp3|flac|wav|ogg)$/ ) {
+            } elsif ( $file =~ /\.(mp3|flac|wav|ogg|m4a|mp4|aac)$/ ) {
                 push @$files, $file;
                 return;
             }
