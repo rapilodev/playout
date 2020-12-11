@@ -180,9 +180,10 @@ sub fullScan {
 
     my $result = compare(
         {
-            cache      => $cache,
-            files      => $files,
-            expireTime => $expireTime
+            cache         => $cache,
+            files         => $files,
+            expireTime    => $expireTime,
+            maxProcessing => $options->{maxProcessing}
         }
     );
 
@@ -216,10 +217,11 @@ sub shortScan {
 
         my $result = compare(
             {
-                cache      => $cache,
-                files      => $files,
-                date       => $date,
-                expireTime => $expireTime
+                cache        => $cache,
+                files        => $files,
+                date         => $date,
+                expireTime   => $expireTime,
+                maxProessing => $options->{maxProcessing},
             }
         );
         $updateAudio += $result->{changed};
@@ -240,6 +242,7 @@ sub compare {
 
     my $cache = $options->{cache};
     my $files = $options->{files};
+    my $maxProcessing = $options->{maxProcessing};
 
     # set path to optional date
     my $dir  = undef;
@@ -274,8 +277,6 @@ sub compare {
         next if ( defined $dir ) && ( !isLocatedAt( $path, $dir ) );
         next unless hasChanged( $path, $file->{modified_at}, $cache );
 
-        #print "has changed:$path\n";
-
         $file->{start_epoch} = Time::datetimeToUnixTime( $file->{start} );
         next unless defined $file->{start_epoch};
 
@@ -289,13 +290,10 @@ sub compare {
 
     @$filesToAnalyse = sort { $files->{$a}->{distance} <=> $files->{$b}->{distance} } @$filesToAnalyse;
 
-    #print STDERR Dumper $filesToAnalyse ;
-
     # sort by absolute duration from now to start
     my $expireTime = $options->{expireTime};
+    my $analysed=0;
     for my $path (@$filesToAnalyse) {
-
-        #print Dumper($path);
         my $file        = $files->{$path};
         my $start       = $file->{start};
         my $start_epoch = $file->{start_epoch};
@@ -313,7 +311,6 @@ sub compare {
               )
             {
                 Log::warn( qq{abort scan of $path, expireTime=} . Time::timeToDatetime($expireTime) );
-
                 $expired = 1;
                 last;
             }
@@ -341,6 +338,7 @@ sub compare {
             $cache->{info}->{$start}->{$path} = $entry;
             Log::debug( 3, qq{add "$path" to info} );
         } else {
+            $analysed++;
 
             # audio files
             $entry->{start_epoch} = $start_epoch;
@@ -382,8 +380,8 @@ sub compare {
             }
 
             # if more files to be processed, mark as interrupt but do not finish scan
-            if ( scalar @$filesToAnalyse > 0 ) {
-                my $left = @$filesToAnalyse - 1;
+            if ( $maxProcessing && $analysed >= $maxProcessing ) {
+                my $left = @$filesToAnalyse - $analysed;
                 Log::debug( 1, qq{ interrupt scan, $left files left} );
                 $expired = 1;
                 last;
@@ -646,15 +644,11 @@ sub getDates {
 
 sub getFilesByDate {
     my $date = shift;
-
-    #print Dumper($date);
     return $cache->{date}->{$date};
 }
 
 sub get {
     my $path = shift;
-
-    #print Dumper($path);
     return unless defined $path;
     return $cache->{$path} if defined $cache->{$path};
     return undef;

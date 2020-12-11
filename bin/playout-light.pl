@@ -60,7 +60,6 @@ END{
 }
 system("pkill -f replay.liq");
 
-
 # stop after 7 days to reload
 my $DAYS = 24 * 60 * 60;
 alarm 7 * $DAYS;
@@ -246,7 +245,10 @@ execute( [ "playout_sync.pl", "--config", "$config_file" ] );
 
 # scan files and upload playout entries
 Playout::init({ configFile => $config_file});
-my $updateAudio = MediaFiles::fullScan( { expires => [ time + 15 * 60, Shows::getNextStart() ] } );
+my $updateAudio = MediaFiles::fullScan({
+    maxProcessing => 1,
+    expires       => [ time + 15 * 60, Shows::getNextStart() ]
+});
 Upload::fullUpload() if $updateAudio > 0;
 
 # get events from server

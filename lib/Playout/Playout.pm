@@ -103,13 +103,6 @@ GPL-3+
 use warnings;
 use strict;
 
-#use Data::Dumper;
-#use LWP::Simple();
-#use DateTime();
-#use DateTime::Format::ISO8601();
-#use File::Path qw(make_path);
-#use Getopt::Long();
-#use POSIX();
 use Time::HiRes qw(time sleep);
 
 use Playout::Log();
@@ -137,11 +130,6 @@ sub getPlayer {
 }
 
 sub run() {
-
-	#my $updateAudio=MediaFiles::shortScan();
-	#Upload::shortUpload();
-	#exit;
-
 	my $interface = Config::get('interface');
 	unless ( defined $interface ) {
 		Log::error('no interface configured at config');
@@ -164,7 +152,9 @@ sub run() {
 			updateConfig();
 		}
 
-		my $nextFullScan = MediaFiles::getNextFullScan();
+		my $nextFullScan = MediaFiles::getNextFullScan({
+		    maxProcessing => 1
+		});
 
 		Log::debug( 1, "next full media check in " . sprintf( "%.02f secs", $nextFullScan ) );
 		my $nextShortScan = MediaFiles::getNextShortScan();
@@ -174,7 +164,9 @@ sub run() {
 		if ( $nextFullScan > 0 ) {
 			Log::debug( 1, "next full media check in " . sprintf( "%.02f secs", $nextFullScan ) );
 		} else {
-			my $updateAudio = MediaFiles::fullScan( { expires => [ time + 15 * 60, Shows::getNextStart() ] } );
+			my $updateAudio = MediaFiles::fullScan({
+			    maxProcessing => 1,
+			    expires => [ time + 15 * 60, Shows::getNextStart() ] });
 			Upload::fullUpload() if $updateAudio > 0;
 			MediaFiles::listAudio() if Log::getLevel() > 1;
 			$skipShortScan = 1;
@@ -185,7 +177,10 @@ sub run() {
 			if ( $nextShortScan > 0 ) {
 				Log::debug( 1, "next short check in " . sprintf( "%.02f secs", $nextShortScan ) );
 			} else {
-				my $updateAudio = MediaFiles::shortScan( { expires => [ time + 15 * 60, Shows::getNextStart() ] } );
+				my $updateAudio = MediaFiles::shortScan({
+				    maxProcessing => 1,
+				    expires => [ time + 15 * 60, Shows::getNextStart() ]
+				});
 				Upload::shortUpload()   if $updateAudio > 0;
 				MediaFiles::listAudio() if Log::getLevel() > 1;
 			}
@@ -327,10 +322,7 @@ sub updateConfig {
 	MediaFiles::setShortScanInterval( $config->{shortScanInterval} );
 	MediaFiles::setFullScanInterval( $config->{fullScanInterval} );
 	MediaFiles::setSyncPlotTargetDir( $config->{syncPlotTargetDir} );
-	Log::debug( 2, "setUrl:$config->{syncSetScheduleUrl}" ) if defined $config->{syncSetScheduleUrl};
 	Upload::setUrl( $config->{syncSetScheduleUrl} );
-
-	#Download::setUrl($config->{syncGetScheduleUrl});
 
 	# add checks
 	$error += MediaFiles::checkMediaDir();
@@ -342,13 +334,13 @@ sub printConfig {
 	Log::info(
 		qq{
 mediaDir            } . MediaFiles::getMediaDir() . qq{
-shortScanInterval  } . MediaFiles::getShortScanInterval() . qq{
-fullScanInterval   } . MediaFiles::getFullScanInterval() . qq{
+shortScanInterval   } . MediaFiles::getShortScanInterval() . qq{
+fullScanInterval    } . MediaFiles::getFullScanInterval() . qq{
 bufferDelay         } . Shows::getStartUpDuration() . qq{
-maxAudioLength     } . Config::get('maxAudioLength') . qq{
+maxAudioLength      } . Config::get('maxAudioLength') . qq{
 timeZone            } . Time::getTimeZone() . qq{
 tempDir             } . Config::get('tempDir') . qq{
-verboseLevel          } . Log::getLevel() . qq{
+verboseLevel        } . Log::getLevel() . qq{
 initCommand        '} . Config::get('initCommand') . qq{'
 playCommand        '} . Config::get('playCommand') . qq{'
 }
