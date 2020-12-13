@@ -1,3 +1,9 @@
+playout (0.15) bionic; urgency=medium
+  * bin/playout-light.pl: support m4a,mp4,aac
+  * playout-light.pl: unique event starts
+  * MediaFiles: scan*: maxProcessing option
+ -- Milan Chrobok <mc@radiopiloten.de>  Fri, 11 Dec 2020 21:05:18 +0200
+
 playout (0.14) bionic; urgency=medium
   * replace cvlc by ffmpeg
  -- Milan Chrobok <mc@radiopiloten.de>  Sun, 6 Dec 2020 21:05:18 +0200
