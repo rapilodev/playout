@@ -829,7 +829,7 @@ sub scanDir {
         my $date = Time::pathToDate( $mediaDir, $File::Find::name );
         return unless defined $date;
         return unless $date gt $limitDate;
-        Log::debug( 2, "$date after limit of $limitDate" );
+        Log::debug( 3, "$date after limit of $limitDate" );
         my $mtime = ( stat($_) )[9];
         $files->{$File::Find::name} = {
             modified_at => $mtime,

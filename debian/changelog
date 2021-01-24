@@ -1,3 +1,7 @@
+playout (0.16) bionic; urgency=medium
+  * bin/playout-light.pl: use MediaFiles to determine audio files
+ -- Milan Chrobok <mc@radiopiloten.de>  Sun, 24 Jan 2021 21:05:18 +0200
+
 playout (0.15) bionic; urgency=medium
   * bin/playout-light.pl: support m4a,mp4,aac
   * playout-light.pl: unique event starts

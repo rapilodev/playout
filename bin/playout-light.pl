@@ -23,10 +23,10 @@ use utf8;
 use feature "say";
 use open ':std', ':encoding(UTF-8)';
 
-# * get schedule and files using calcms
-# * build playout schedule file fo the next week 
+# * sync audio files by using playout_sync.pl
+# * build schedule for the next week and play it using liquidsoap
 #
-# config file 
+# config file
 # * required by --config <filename>
 # * config syntax follows playout_sync.pl,
 # * plus streamTarget containing liquidsoap icecast stream config
@@ -60,37 +60,13 @@ END{
 }
 system("pkill -f replay.liq");
 
-# stop after 7 days to reload
+# run script for one week
 my $DAYS = 24 * 60 * 60;
 alarm 7 * $DAYS;
 
-sub get_date_time {
-    my $time = time;
-    ( my $sec, my $min, my $hour, my $day, my $month, my $year ) = localtime($time);
-    return sprintf(
-        "%4d-%02d-%02d %02d:%02d:%02d.%03d",
-        $year + 1900,
-        $month + 1, $day, $hour, $min, $sec, ( $time - int($time) ) * 1000
-    );
-}
-
-sub get_events {
-    my $url = shift;
-
-    print get_date_time() . " ---INFO--- fetch events from $url\n";
-    my $ua       = LWP::UserAgent->new();
-    my $response = $ua->get($url);
-    my $doc;
-    if ( $response->is_success ) {
-        $doc = $response->decoded_content;
-    } else {
-        die $response->status_line;
-    }
-    return JSON::decode_json($doc)->{events};
-}
-
-sub filter_events {
-    my $events = shift;
+sub get_script($$) {
+    my $icecast  = shift;
+    my $fallback = shift;
 
     my $format = DateTime::Format::Strptime->new(
         pattern   => '%Y-%m-%d %H:%M:%S',
@@ -98,94 +74,30 @@ sub filter_events {
         on_error  => 'croak',
     );
 
-    my $entries = [];
-    for my $event (@$events) {
-        my $end      = $format->parse_datetime( $event->{end} );
-        my $start    = $format->parse_datetime( $event->{start} );
-        my $duration = $start - $end;
-        my $entry    = {
-            start_date    => $event->{start_date},
-            start_time    => $event->{start_time},
-            start_weekday => $start->day_of_week,
-            end_date      => $event->{end_date},
-            end_time      => $event->{end_time},
-            end_weekday   => $end->day_of_week,
-            start         => $event->{start},
-            end           => $event->{end},
-            series_name   => $event->{series_name},
-            episode       => $event->{episode},
-            duration      => $duration->in_units("minutes"),
-            full_title    => $event->{full_title}
-        };
-        push @$entries, $entry;
-    }
-    return $entries;
-}
-
-sub get_files {
-    my $dirs  = shift;
-    my $files = [];
-
-    File::Find::find(
-        sub {
-            my $file = $File::Find::name;
-            if ( !-f $file ) {
-                return;
-            } elsif ( $file =~ /\.(mp3|flac|wav|ogg|m4a|mp4|aac)$/ ) {
-                push @$files, $file;
-                return;
-            }
-        },
-        @$dirs
-    );
-    return $files;
-}
-
-sub find_file($$$) {
-    my $entry = shift;
-    my $dirs  = shift;
-    my $files = shift;
-
-    if ( $entry->{start} =~ /(\d\d\d\d)\-(\d\d)\-(\d\d) (\d\d)\:(\d\d)/ ) {
-        my $prefix = $1 . '/' . $2 . '/' . $3 . '/' . $4 . '-' . $5 . '/';
-        for my $dir (@$dirs) {
-            my $prefix = $dir . '/' . $prefix;
-            $prefix =~ s!/+!/!g;
-            for my $file ( sort @$files ) {
-                return $file if index( $file, $prefix ) != -1;
-            }
-        }
-    }
-
-    warn get_date_time() . " --WARNING- no file found for $entry->{full_title}\n";
-    return undef;
-}
-
-sub get_script($$$$$) {
-    my $entries = shift;
-    my $dirs    = shift;
-    my $files   = shift;
-    my $icecast = shift;
-    my $fallback = shift;
-
     my @shows  = ();
-    my $active = 0;
+    my $first = 1;
     my $done   = {};
-    for my $entry (@$entries) {
-        next if $done->{$entry->{start_time}};
-        my $title = $entry->{series_name} . " " . $entry->{episode};
-        $title =~ s/\"//g;
-        my $file = find_file( $entry, $dirs, $files );
-        my ( $sh, $sm ) = split( /\:/, $entry->{start_time}, 2 );
-        my ( $eh, $em ) = split( /\:/, $entry->{end_time},   2 );
-        push @shows, sprintf "%s%s ( { %dw%dh%dm%ds-%dw%dh%dm%ds }, %s )\n",
-          $active && $file ? ', ' : '  ',
-          $file            ? ' '  : '#',
-          $entry->{start_weekday}, $sh, $sm, 0,
-          $entry->{end_weekday},   $eh, $em, 0,
-          $file ? qq{single("$file")} : qq{say("$title")};
-        $active++ if $file;
-        $done->{$entry->{start_time}}++;
+
+    my $date = DateTime->now ( time_zone => 'local')->subtract(days => 1);
+    for (0..7){
+        $date->add( days => 1 );
+        my $files = MediaFiles::getFilesByDate($date->ymd);
+
+        for my $file (
+            sort { $files->{$a}->{start} cmp $files->{$b}->{start} }
+            keys %$files
+        ){
+            my $event = $files->{$file};
+            my $start = $format->parse_datetime( $event->{start} );
+            my $end   = $start->clone->add( seconds => $event->{duration} );
+            push @shows, sprintf("%s ( { %dw%dh%dm%ds-%dw%dh%dm%ds }, single(\"%s\") )\n",
+                $first ? '  ' : ', ',
+                $start->wday, $start->hour, $start->minute, 0,
+                $end->wday,   $end->hour,   $end->minute,   0,
+                $event->{file}
+            );
+            $first=0;
+        }
     }
 
     my $shows = join '', @shows;
@@ -217,7 +129,7 @@ $shows
 
 sub execute($) {
     my $command = shift;
-    print get_date_time() . " ---INFO--- execute: " . join( " ", @$command ) . "\n";
+    print DateTime->now()->datetime . " ---INFO--- execute: " . join( " ", @$command ) . "\n";
     system(@$command);
 }
 
@@ -228,43 +140,26 @@ die "cannot read from $config_file" unless -r $config_file;
 my $config = Config::General->new($config_file)->{DefaultConfig}->{config};
 die "could not read config from $config_file" unless $config;
 
-# date now or from command line yyyy-mm-dd
-my $date = DateTime->now( time_zone => 'local' )->subtract( days => 1 );
-$date = DateTime::Format::Strptime->new(
-    pattern   => '%Y-%m-%d',
-    time_zone => 'local',
-    on_error  => 'croak',
-)->parse_datetime( $ARGV[0] )
-  if scalar(@ARGV) > 0;
-my $from_date = $date->ymd();
-my $till_date = $date->add( weeks => 1 )->ymd();
-
-my $url     = $config->{syncGetScheduleUrl} . qq{&from_date=$from_date&till_date=$till_date};
 my $dirs    = [ $config->{mediaDir} or die "missing mediaDir in config" ];
 my $icecast = $config->{streamTarget} or die "missing streamTarget in config";
 
+my $till = DateTime->now()->add( days=>7 )->ymd;
+
 # get audio files from server
-execute( [ "playout_sync.pl", "--config", "$config_file" ] );
+execute( [ "playout_sync.pl", "--config", "$config_file", "--till", $till ] );
 
 # scan files and upload playout entries
 Playout::init({ configFile => $config_file});
 my $updateAudio = MediaFiles::fullScan({
-    maxProcessing => 1,
+#    maxProcessing => 1,
     expires       => [ time + 15 * 60, Shows::getNextStart() ]
 });
 Upload::fullUpload() if $updateAudio > 0;
 
-# get events from server
-my $events = get_events($url);
-my $slots  = filter_events($events);
-#
-my $files  = get_files($dirs);
-my $script = get_script( $slots, $dirs, $files, $icecast, $config->{fallback} );
-
 # save script
 my $script_name = 'replay.liq';
 open my $fh, '>', $script_name or die "$!";
-print $fh $script;
+print $fh get_script( $icecast, $config->{fallback} );
 close $fh;
 
 # start script
