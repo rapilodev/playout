@@ -836,7 +836,7 @@ sub scanDir {
             start       => Time::pathToDatetime( $mediaDir, $File::Find::name ),
         };
     }
-    File::Find::find( { wanted => \&wanted }, $dir );
+    File::Find::find( { wanted=>\&wanted, follow_fast=>1 }, $dir );
 
     # on multiple audio files at same time ignore all but the first one
     my $previousFile  = undef;
