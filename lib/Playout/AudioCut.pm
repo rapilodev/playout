@@ -214,11 +214,11 @@ sub splitAudio {
 sub secondsToHMS {
     my $time = shift;
     my $hours  = int( $time / 3600 );
-    $time -= $hours * 60;
+    $time -= $hours * 3600;
     my $mins  = int( $time / 60 );
     $time -= $mins * 60;
     my $secs = $time;
-    return sprintf "%02d:%02d:%02d", $hours, $mins, $secs;
+    return sprintf "%02d:%02d:%02d", $hours, $mins%60, $secs%60;
 }
 
 # do not delete last line

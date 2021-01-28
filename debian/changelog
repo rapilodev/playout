@@ -1,3 +1,7 @@
+playout (0.18) bionic; urgency=medium
+  * fix ffmpeg duration calc
+ -- Milan Chrobok <mc@radiopiloten.de>  Thu, 28 Jan 2021 21:05:18 +0200
+
 playout (0.17) bionic; urgency=medium
   * MediaFiles: allow symbolic links
  -- Milan Chrobok <mc@radiopiloten.de>  Wed, 27 Jan 2021 23:05:18 +0200
