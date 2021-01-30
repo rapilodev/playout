@@ -143,10 +143,14 @@ die "could not read config from $config_file" unless $config;
 my $dirs    = [ $config->{mediaDir} or die "missing mediaDir in config" ];
 my $icecast = $config->{streamTarget} or die "missing streamTarget in config";
 
-my $till = DateTime->now()->add( days=>7 )->ymd;
-
 # get audio files from server
-execute( [ "playout_sync.pl", "--config", "$config_file", "--till", $till ] );
+my $from = DateTime->now()->subtract( days=>1 )->ymd;
+my $till = DateTime->now()->add( days=>7 )->ymd;
+execute([ "playout_sync.pl",
+    "--config", "$config_file",
+    "--from", $from,
+    "--till", $till
+]);
 
 # scan files and upload playout entries
 Playout::init({ configFile => $config_file});
