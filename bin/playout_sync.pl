@@ -80,7 +80,7 @@ my $currentEvents = {};
 
 my $backupFile = MediaFiles::getMediaDir().'/backup.json';
 my $userAgent = LWP::UserAgent->new;
-Log::debug( 1, "sync_source_url=" . $syncSourceUrl );
+Log::debug( 0, "sync_source_url=" . $syncSourceUrl );
 my $events = getEventsFromJson( $userAgent, $syncSourceUrl );
 if (-e $backupFile){
     my $backups = JSON::decode_json( loadFile($backupFile) );
