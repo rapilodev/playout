@@ -465,7 +465,7 @@ sub getUsage {
     return qq|
 usage: $0 --from yyyy-mm-dd --till yyyy-mm-dd --verbose [level]
 
-playout_sync.pl imports events from an external data source. It creates all 
+playout-sync imports events from an external data source. It creates all
 necessary directories (with date and time in the path). After the directories 
 have been created, only the audio files have to be put into the directories to 
 schedule them for playback.

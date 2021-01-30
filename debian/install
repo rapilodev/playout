@@ -1,11 +1,11 @@
 bin/playout.pl /usr/bin
-bin/playout_sync.pl /usr/bin
+bin/playout-sync /usr/bin
 bin/playout /usr/bin
 bin/playout-light.pl /usr/bin
 etc/init/playout.conf /etc/init
 etc/logrotate.d/playout /etc/logrotate.d
 etc/playout/playout.conf /etc/playout
-etc/playout/playout-light-example.conf /etc/playout
+etc/playout/playout-lite-example.conf /etc/playout
 etc/systemd/system/playout.service /etc/systemd/system
 lib/Playout/Play/Liquidsoap.pm /usr/share/perl5/Playout/Play
 lib/Playout/Play/Simple.pm /usr/share/perl5/Playout/Play

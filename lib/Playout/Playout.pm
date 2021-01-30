@@ -30,7 +30,7 @@ Changes of the configuration will be detected and reread on the fly.
 A list of all audio files is stored internally and frequently updated to reduce disk IO. 
 
 To automatically create the media sub directories (containing the schedule date and time in the path) 
-you can import a JSON schedule from an URL by running playout_sync.pl. See playout_sync.pl --help for details.
+you can import a JSON schedule from an URL by running playout-sync. See playout-sync --help for details.
 
 At point of installation na user 'playout' will be created and assigned to groups 'playout', 'audio', 'pulse' and 'pulse-access'
 to enable audio access and separate it from other user accounts.

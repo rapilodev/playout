@@ -1,3 +1,11 @@
+playout (0.19.2) bionic; urgency=medium
+  * rename playout_sync.pl to playout-sync
+  * rename playout_light.pl to playout-lite
+  * playout_sync.pl: show url for source events
+  * playout_sync.pl: ignore empty events
+  * playout-light.pl: get media files from yesterday
+ -- Milan Chrobok <mc@radiopiloten.de>  Sat, 30 Jan 2021 12:05:18 +0200
+
 playout (0.18) bionic; urgency=medium
   * fix ffmpeg duration calc
  -- Milan Chrobok <mc@radiopiloten.de>  Thu, 28 Jan 2021 21:05:18 +0200

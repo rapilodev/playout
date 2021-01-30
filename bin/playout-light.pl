@@ -23,12 +23,12 @@ use utf8;
 use feature "say";
 use open ':std', ':encoding(UTF-8)';
 
-# * sync audio files by using playout_sync.pl
+# * sync audio files by using playout-sync
 # * build schedule for the next week and play it using liquidsoap
 #
 # config file
 # * required by --config <filename>
-# * config syntax follows playout_sync.pl,
+# * config syntax follows playout-sync,
 # * plus streamTarget containing liquidsoap icecast stream config
 #
 # <config>
@@ -146,7 +146,7 @@ my $icecast = $config->{streamTarget} or die "missing streamTarget in config";
 # get audio files from server
 my $from = DateTime->now()->subtract( days=>1 )->ymd;
 my $till = DateTime->now()->add( days=>7 )->ymd;
-execute([ "playout_sync.pl",
+execute([ "playout-sync",
     "--config", "$config_file",
     "--from", $from,
     "--till", $till
