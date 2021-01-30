@@ -136,6 +136,7 @@ sub filterEvents {
     for my $event (@$events) {
         my $id    = $event->{event_id};
         my $start = $event->{start_datetime};
+        next unless $id and $start;
         $current->{$id}->{$start}++;
 
         my $recordingIndex = $current->{$id}->{$start};
