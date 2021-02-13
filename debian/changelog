@@ -1,3 +1,9 @@
+playout (0.20) bionic; urgency=medium
+  * split playout-lite in playout-lite and playout-sync-lite
+  * configure bufferDelay: delay in seconds to compensate transport time
+  * configure maxRunTime: exit after given number of days to restart with fresh schedule
+ -- Milan Chrobok <mc@radiopiloten.de>  Sat, 13 Feb 2021 12:05:18 +0200
+
 playout (0.19.2) bionic; urgency=medium
   * rename playout_sync.pl to playout-sync
   * rename playout_light.pl to playout-lite

@@ -1,5 +1,6 @@
 bin/playout.pl /usr/bin
 bin/playout-sync /usr/bin
+bin/playout-sync-lite /usr/bin
 bin/playout /usr/bin
 bin/playout-lite /usr/bin
 etc/init/playout.conf /etc/init

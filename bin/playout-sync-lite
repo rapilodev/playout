@@ -1,0 +1,71 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+use Config::General();
+use Cwd();
+use Data::Dumper;
+use DateTime();
+use DateTime::Format::Strptime ();
+use Fcntl qw(:flock);
+use File::Find();
+use Getopt::Long();
+use JSON();
+use HTTP::Request();
+use LWP::UserAgent();
+use FindBin;
+
+use Playout::Playout();
+use Playout::MediaFiles();
+use Playout::Upload();
+
+use utf8;
+use feature "say";
+
+use open ':std', ':encoding(UTF-8)';
+
+# * sync audio files by using playout-sync
+
+sub execute($) {
+    my $command = shift;
+    print DateTime->now()->datetime . " ---INFO--- execute: " . join( " ", @$command ) . "\n";
+    system(@$command);
+}
+
+sub sync {
+    my $config_file = shift;
+
+    # get audio files from server
+    my $from = DateTime->now()->subtract( days => 1 )->ymd;
+    my $till = DateTime->now()->add( months => 3 )->ymd;
+    execute( [ "playout-sync", "--config", "$config_file", "--from", $from, "--till", $till ] );
+
+    # scan files and upload playout entries
+    Playout::init( { configFile => $config_file } );
+    my $updateAudio = MediaFiles::fullScan(
+        {
+            #    maxProcessing => 1,
+            expires => [ time + 15 * 60, Shows::getNextStart() ]
+        }
+    );
+    Upload::fullUpload() if $updateAudio > 0;
+}
+
+# END cannot be localized
+my $options = {};
+Getopt::Long::GetOptions(
+    "config=s" => \$options->{config},
+    "help"     => \$options->{help}
+);
+
+die "missing --config " unless $options->{config};
+die "cannot read from $options->{config}" unless -r $options->{config};
+die qq{$0 --config=<file>
+--config   config file
+} if $options->{help};
+
+open our $file, '<', $0 or die $!;
+flock $file, LOCK_EX | LOCK_NB or die "abort as another instance runs.\n";
+sync( $options->{config} );
+
