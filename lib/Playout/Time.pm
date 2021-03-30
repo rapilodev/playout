@@ -183,19 +183,19 @@ sub getUtcDatetime {
             return undef;
         }
 
-        my $dt = DateTime->new(
-            year      => $year,
-            month     => $month,
-            day       => $day,
-            hour      => $hour,
-            minute    => $minute,
-            second    => $second,
-            time_zone => $timeZone
-        );
-        $dt->set_time_zone('UTC');
-
-        #print STDERR $dt->strftime("%Y-%m-%d %H:%M %Z")."\n";
-        return $dt;
+        return eval {
+            my $dt = DateTime->new(
+                year      => $year,
+                month     => $month,
+                day       => $day,
+                hour      => $hour,
+                minute    => $minute,
+                second    => $second,
+                time_zone => $timeZone
+            );
+            $dt->set_time_zone('UTC');
+            return $dt;
+        };
     }
 
     Log::warn("could not parse date :'$datetime'!");
