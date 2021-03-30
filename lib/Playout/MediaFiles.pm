@@ -369,11 +369,12 @@ sub compare {
             # store media files by date
             my $date = Time::pathToDate( $mediaDir, $path );
             next unless defined $date;
+            my $status = Shows::getStatus($entry);
+            next unless $status;
+
             $cache->{date}->{$date}->{$path} = $cache->{$path};
             Log::debug( 3, qq{add "$path" to date} );
 
-            # check status and stop if running
-            my $status = Shows::getStatus($entry);
             if ( $status->{isRunning} ) {
                 Log::debug( 1, qq{ stop scan, due to entry found '$path' is still running} );
                 last;
