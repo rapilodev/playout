@@ -1,3 +1,7 @@
+playout (0.21) bionic; urgency=medium
+  * ignore undefined datetime (invalid date (day saving time) stopped sync)
+ -- Milan Chrobok <mc@radiopiloten.de>  Tue, 30 Mar 2021 22:05:18 +0200
+
 playout (0.20) bionic; urgency=medium
   * split playout-lite in playout-lite and playout-sync-lite
   * configure bufferDelay: delay in seconds to compensate transport time
