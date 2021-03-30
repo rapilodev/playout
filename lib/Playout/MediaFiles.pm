@@ -868,7 +868,7 @@ sub readCache {
     my $cacheFile = getCacheFile();
     Log::info(qq{read file cache from "$cacheFile"});
     return {} unless -e $cacheFile;
-    my $cache = Storable::retrieve($cacheFile);
+    my $cache = Storable::lock_retrieve($cacheFile);
     return $cache;
 }
 
@@ -882,7 +882,7 @@ sub setCache {
         Log::error( getUserInfo() );
     }
     Log::info(qq{store file cache at "$cacheFile"});
-    Storable::store( $cache, $cacheFile );
+    Storable::lock_store( $cache, $cacheFile );
 }
 
 sub getPathRelativeToMediaDir {
