@@ -127,6 +127,7 @@ sub getStatus {
     if ( $end ne '' ) {
         Log::debug( 2, "end: $end" );
         $end_time = Time::getUtcDatetime($end);
+        return unless defined $end_time;
         my $gap = $end_time->subtract_datetime($audio_end_time);
         $gap = Time::durationToSeconds($gap);
         $result->{overlap} = -$gap;
