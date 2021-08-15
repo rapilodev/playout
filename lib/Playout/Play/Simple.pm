@@ -87,8 +87,8 @@ sub prepare {
         Log::debug( 0, "after load file" );
     }
 
-    Log::debug( 0, "before cvlc --help" );
-    my $cmd         = 'time ' . $self->{playCommand};
+    Log::debug( 0, "deactivate silence detection" );
+    my $cmd         = $self->{playCommand};
     my $logFile     = Log::getLogFile();
     my $playoutFile = '/usr/share/playout/peak.wav';
     my $pidFile     = Process::getPidFile( $self->{tempDir}, $playoutFile );
