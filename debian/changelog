@@ -1,3 +1,8 @@
+playout (0.22.1) bionic; urgency=medium
+  * remove time measurement for silence detection
+  * set debian/control version to 5.4.1
+ -- Milan Chrobok <mc@radiopiloten.de>  Sun, 15 Aug 2021 22:05:18 +0200
+ 
 playout (0.21) bionic; urgency=medium
   * ignore undefined datetime (invalid date (day saving time) stopped sync)
  -- Milan Chrobok <mc@radiopiloten.de>  Tue, 30 Mar 2021 22:05:18 +0200
