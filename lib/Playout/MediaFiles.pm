@@ -42,7 +42,7 @@ sub init {
     $cache = readCache();
 
     # check if rms plot is supported
-    my ( $result, $exitCode ) = Process::execute( 'which plotRms 2>&1' );
+    my $exitCode = Process::execute my $result, '<+ERR', 'which', 'plotRms';
     $usePlot = 1 if $exitCode == 0;
     setSyncPlotTargetDir( $options->{syncPlotTargetDir} ) if defined $options->{syncPlotTargetDir};
 }
@@ -487,13 +487,12 @@ sub getMetadata {
         return {};
     }
 
-    open my $cmd, '-|', "$mediaInfo -f '$path' 2>&1";
-    unless ($cmd) {
-        Log::warn "could not execute $mediaInfo";
+    my $exitCode = Process::execute my $content, '<', $mediaInfo, "-f", $path;
+    if ($exitCode != 0){
+        Log::warn "could not execute $mediaInfo -f $path, $!";
         return {};
     }
-    while (<$cmd>) {
-        my $line   = $_;
+    for my $line (split /\n/, $content) {
         my @fields = split( /\s+\:\s+/, $line, 2 );
         my $key    = $fields[0];
         my $value  = $fields[1];
@@ -525,7 +524,6 @@ sub getMetadata {
             $info->{$key} = $value if $value =~ /^\d+$/;
         }
     }
-    close $cmd;
 
     $info->{"Duration"} = int( $info->{"Duration"} / 1000 ) if defined $info->{"Duration"};
     $info->{"Bit rate"} /= 1000 if defined $info->{"Bit rate"};
@@ -558,14 +556,9 @@ sub parseStreamFile {
     my $result = shift || {};
 
     Log::debug( 1, "parse playlist $filename" );
-    my $file;
-    unless (open ($file, '<', $filename)){
-        Log::warn qq{could not read "$filename"};
-        return undef;
-    };
+    open (my $file, '<', $filename) or Log::warn qq{could not read "$filename"}, return;
     
-    while (<$file>) {
-        my $line = $_;
+    while (my $line = <$file>) {
         unless ( defined $result->{duration} ) {
             if ( $line =~ /#EXTINF:(\d+)/ ) {
                 $result->{duration} = $1;
@@ -681,8 +674,6 @@ sub getDataFromPlotRms {
     my $path  = shift;
     my $entry = shift;
 
-    my $error = undef;
-
     if ( $usePlot == 0 ) {
         my $error = "package rms not installed\n";
         Log::debug( 1, $error ) if defined $error;
@@ -691,7 +682,7 @@ sub getDataFromPlotRms {
 
     my $targetDir = File::Basename::dirname($path);
     unless ( -w $targetDir ) {
-        $error = "cannot write to directory '$targetDir'";
+        my $error = "cannot write to directory '$targetDir'";
         Log::error($error);
         Log::error( getUserInfo() );
         return ( $entry, $error );
@@ -707,8 +698,7 @@ sub getDataFromPlotRms {
     for my $suffix ( 'png', 'svg' ) {
         my $imageFile = "$targetDir/$targetFile.$suffix";
 
-        ( $result, my $exitCode ) = Process::execute( "plotRms -i '$path' -o '$imageFile'" . ' 2>&1' );
-
+        my $exitCode = Process::execute( my $result, '<+ERR', 'plotRms', '-i', $path, '-o', $imageFile);
         # this will not be handled as reason for fallback to other detection method
         if ( $exitCode != 0 ) {
             my $error = qq{could not analyse and plot "$path" by 'plotRms', exitCode=$exitCode};
@@ -735,8 +725,9 @@ sub getDataFromPlotRms {
     }
 
     unless ( defined $entry->{duration} ) {
-        $error = "could not detect duration using rmsPlot\n";
+        my $error = "could not detect duration using rmsPlot\n";
         Log::warn($error);
+        return ( $entry, $error );
     }
 
     return ( $entry, $error );
@@ -750,8 +741,7 @@ sub getDurationFromSoxi {
     my $error = "could not get duration from soxi";
     Log::info(qq{get audio duration for "$path" from soxi});
     if ( $path =~ /\.(mp3|flac)$/i ) {
-        my ( $result, $exitCode ) = Process::execute( qq{soxi -D '$path'} . ' 2>&1' );
-
+        my $exitCode = Process::execute my $result, '<+ERR', 'soxi' '-D', $path;
         if ( $result =~ /([\d\.]+)/ ) {
             $entry->{duration} = $1;
             $error = undef;
@@ -786,7 +776,7 @@ sub syncPlotFileTarget {
         return;
     }
 
-    my ( $result, $exitCode ) = Process::execute( "rsync -avR '" . $sourceFile . "' '" . $syncPlotTargetDir . "'" . ' 2>&1' );
+    my $exitCode = Process::execute my $result, '<+ERR', 'rsync', '-avR', $sourceFile, $syncPlotTargetDir;
     Log::warn(qq{could not copy "$mediaDir/$sourceFile" to "$syncPlotTargetDir": "$result"}) if ( $exitCode != 0 );
 }
 

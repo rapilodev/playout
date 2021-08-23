@@ -2,7 +2,6 @@ package Play::Simple;
 
 use warnings;
 use strict;
-
 use Playout::MediaFiles();
 use Playout::Process();
 use Playout::AudioCut();
@@ -25,16 +24,19 @@ sub new {
 
 # execute onInitCommand
 sub init {
-    my $args = shift;
-    Process::execute( $args->{onInitCommand} ) if defined $args->{onInitCommand};
+    my $self = shift;
+    return unless $self->{onInitCommand};
+    my @cmd = split /\s/, $self->{onInitCommand};
+    Process::execute my $result, '<', @cmd;
     return;
 }
 
 # will be called at stop of playout
 sub exit {
     my $self = shift;
-    return unless defined $self->{onExitCommand};
-    my ( $result, $exitCode ) = Process::execute( $self->{onExitCommand} );
+    return unless $self->{onExitCommand};
+    my @cmd = split /\s/, $self->{onExitCommand};
+    my $exitCode = Process::execute my $result, '<', @cmd;
     print $result;
     return;
 }
@@ -93,10 +95,11 @@ sub prepare {
     my $playoutFile = '/usr/share/playout/peak.wav';
     my $pidFile     = Process::getPidFile( $self->{tempDir}, $playoutFile );
 
-    $cmd =~ s/PID_FILE/\'$pidFile\'/g;
-    $cmd =~ s/LOG_FILE/\'$logFile\'/g;
-    $cmd =~ s/AUDIO_FILE/\'$playoutFile\'/g;
-    my ( $result, $exitCode ) = Process::execute($cmd);
+    my $exitCode = Process::execute(my $result, '<',
+        map { s/PID_FILE/$pidFile/gr }
+        map { s/LOG_FILE/$logFile/gr }
+        map { s/AUDIO_FILE/$playoutFile/gr }
+        split /\s/, $cmd);
     Log::debug( 0, substr( $result, 0, 80 ) . '...' );
     Log::debug( 0, "after prepare" );
     return;
@@ -125,10 +128,12 @@ sub play {
     #build play command
     my $cmd     = $self->{playCommand};
     my $logFile = Log::getLogFile();
-    $cmd =~ s/PID_FILE/\'$pidFile\'/g;
-    $cmd =~ s/LOG_FILE/\'$logFile\'/g;
-    $cmd =~ s/AUDIO_FILE/\'$playoutFile\'/g;
-    Process::execute($cmd);
+
+    my $exitCode = Process::execute my $result, '<',
+        map { s/PID_FILE/$pidFile/gr }
+        map { s/LOG_FILE/$logFile/gr }
+        map { s/AUDIO_FILE/$playoutFile/gr }
+        split /\s/, $cmd;
     return;
 }
 

@@ -148,7 +148,7 @@ sub removeOldFiles {
     my $now = time();
     my $DAY = 24 * 60 * 60;
 
-    opendir( my $dh, $outputDirectory ) || Log::warn("cannot open $outputDirectory");
+    opendir( my $dh, $outputDirectory ) or Log::warn("cannot open $outputDirectory");
     return unless defined $dh;
 
     while ( my $file = readdir $dh ) {
@@ -201,12 +201,13 @@ sub splitAudio {
     my $startCut = secondsToHMS( $cutPoints->{start} );
     my $endCut   = secondsToHMS( $cutPoints->{end} );
 
-    my $cmd = qq{ffmpeg -vn -sn -nostdin -hide_banner -loglevel warning -i '$inFile' -c copy -ss "$startCut" -to "$endCut" '$outFile'};
-    Log::debug( 1, $cmd );
-    my ( $result, $exitCode ) = Process::execute($cmd);
+    my $exitCode = Process::execute my $result, '<' ,
+        qw(ffmpeg -vn -sn -nostdin -hide_banner -loglevel warning -i ),
+        $inFile , qw(-c copy -ss) , $startCut , qw(-to) , $endCut, $outFile
+    ;
+
 
     #escape ' in filename
-    $outFile =~ s/\'/\'\\\'\'/g;
     Log::debug( 1, "cutted file='$outFile'" );
     return $outFile;
 }

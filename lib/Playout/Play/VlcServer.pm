@@ -38,7 +38,9 @@ sub new {
 # execute onInitCommand
 sub init {
     my $self = shift;
-    Process::execute( $self->{onInitCommand} ) if defined $self->{onInitCommand};
+    return unless $self->{onInitCommand};
+    my @cmd = split /\s/, $self->{onInitCommand};
+    Process::execute( my $result, '<', @cmd);
 
     #start server
     $self->startVlcServer();
@@ -57,17 +59,18 @@ sub startVlcServer {
 
     my $pidFile = $self->{serverPidFile};
     my $logFile = $self->{serverLogFile};
-    my $cmd     = $self->{serverStartCommand};
     Log::error("missing vlcServer/serverStartCommand") unless defined $self->{serverStartCommand};
     Log::error("missing vlcServer/serverPidFile")      unless defined $self->{serverPidFile};
-    $cmd =~ s/PID_FILE/\'$pidFile\'/g;
-    $cmd =~ s/LOG_FILE/$logFile/g;
-    $cmd =~ s/HOSTNAME/$self->{hostname}/g;
-    $cmd =~ s/PORT/$self->{port}/g;
-    $cmd =~ s/USER/$self->{user}/g;
-    $cmd =~ s/PASSWORD/$self->{password}/g;
+
     Log::info("start vlc server");
-    Process::execute($cmd);
+    Process::execute( my $result, '<',
+        map { s/PID_FILE/$pidFile/gr }
+        map { s/LOG_FILE/$logFile/gr }
+        map { s/HOSTNAME/$self->{hostname}/gr }
+        map { s/PORT/$self->{port}/gr }
+        map { s/USER/$self->{user}/gr }
+        map { s/PASSWORD/$self->{password}/gr }
+        split /\s/, $self->{serverStartCommand});
     return;
 }
 

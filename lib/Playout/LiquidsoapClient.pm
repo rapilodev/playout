@@ -112,8 +112,7 @@ sub sendFileSocket {
     print $fileSocket $command . "\n";
 
     my $lines = '';
-    while (<$fileSocket>) {
-        my $line = $_;
+    while (my $line = <$fileSocket>) {
         chomp $line;
         next if $line eq $command;
         unless ( $line =~ /^END/ ) {
@@ -181,8 +180,7 @@ sub sendTelnetSocket {
     # get response
     my $lines = '';
     return $lines unless defined $telnetSocket;
-    while (<$telnetSocket>) {
-        my $line = $_;
+    while (my $line = <$telnetSocket>) {
         chomp $line;
         next if $line eq $command;
         unless ( $line =~ /^END/ ) {

@@ -420,9 +420,9 @@ sub getEventsFromJson {
 sub loadFile {
     my $filename = shift;
     my $content  = '';
-    open my $file, "<:utf8", $filename || warn("cant read file '$filename'");
-    while (<$file>) {
-        $content .= $_;
+    open my $file, "<:utf8", $filename or warn("cant read file '$filename'");
+    while (my $line = <$file>) {
+        $content .= $line;
     }
     return $content;
 }

@@ -33,16 +33,19 @@ sub new {
 
 # execute onInitCommand
 sub init {
-    my $args = shift;
-    Process::execute( $args->{onInitCommand} ) if defined $args->{onInitCommand};
+    my $self = shift;
+    return unless $self->{onInitCommand};
+    my @cmd = split /\s/, $self->{onInitCommand};
+    my $exitCode = Process::execute my $result, '<', @cmd;
     return;
 }
 
 # will be called at stop of playout
 sub exit {
     my $self = shift;
-    return unless defined $self->{onExitCommand};
-    my ( $result, $exitCode ) = Process::execute( $self->{onExitCommand} );
+    return unless $self->{onExitCommand};
+    my @cmd = split /\s/, $self->{onExitCommand};
+    my $exitCode = Process::execute my $result, '<', @cmd;
     print $result;
     return;
 }

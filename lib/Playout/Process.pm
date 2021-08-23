@@ -6,6 +6,9 @@ use Playout::Log();
 use Data::Dumper;
 use File::Basename();
 use File::Path();
+use IPC::Open3;
+use IO::Select;
+use Symbol 'gensym';
 
 # build pid-file path from audio file name.
 sub getPidFile {
@@ -33,14 +36,8 @@ sub getPid {
     return 0 unless -e $pidFile;
 
     my $pid = 0;
-    open my $file, "<", $pidFile;
-    unless ($file) {
-        Log::error("could not open $pidFile");
-        return;
-    }
-    while ( (<$file>) ) {
-        $pid = $_;
-    }
+    open my $file, "<", $pidFile or Log::error("could not open $pidFile"),return;
+    while ( my $pid = <$file> ) {}
     close $file;
     $pid =~ s/[^\d]//g;
     return $pid;
@@ -78,11 +75,7 @@ sub writePidFile {
     Log::warn($error) if defined $error;
 
     Log::info(qq{write pid file "$pidFile"});
-    open( my $file, ">", $pidFile );
-    unless ($file) {
-        Log::warn(qq{cannot write pid file "$pidFile"});
-        return;
-    }
+    open( my $file, ">", $pidFile ) or Log::warn(qq{cannot write pid file "$pidFile"}), return;
     print $file "$pid";
     close($file);
     return;
@@ -101,20 +94,33 @@ sub stop {
     return;
 }
 
-# todo: use open and arrays
 sub execute {
-    my $cmd = shift;
-
-    Log::exec($cmd);
-    my $result = scalar(`$cmd`) || '';
-    my $exitCode = $? >> 8;
-    Log::info($result) if ( $result ne '' );
-    if ($exitCode) {
-        my $message = "exitCode:" . $exitCode;
-        $message .= " : " . $@ if ($@);
-        Log::error($message);
+    my ($result, $op, @cmd) = @_;
+    $result //= '';
+    my $capture_out = ($op =~ /^</);
+    my $capture_err = ($op eq '<+ERR');
+    my $pid = open3(undef, my $out, my $err = gensym, @cmd);
+    Log::debug( 0, "PID=$pid for @cmd" );
+    my $s = IO::Select->new();
+    $s->add($out) if $capture_out;
+    $s->add($err) if $capture_err;
+    while( my @ready = $s->can_read ) {
+        for my $fh (@ready) {
+            $result .= <$fh> // '';
+            $s->remove($fh) if eof($fh);
+        }
     }
-    return ( $result, $exitCode );
+    close $err or die $!;
+    close $out or die $!;
+    waitpid $pid, 0;
+    my $exitCode = $? >> 8;
+    if ($exitCode == 0){
+        Log::info qq{"@cmd" returned with exit code $exitCode};
+    } else {
+        Log::warn qq{"@cmd" returned with exit code $exitCode};
+    }
+    $_[0] = $result;
+    return $exitCode;
 }
 
 # do not delete last line
