@@ -1,0 +1,13 @@
+#!/bin/sh
+
+AUDIO_FILE=$1
+shift
+LOG_FILE=$1
+shift
+PID_FILE=$1
+shift
+
+[ "$PID_FILE" = "" ] && echo "Usage: playout-start <audio-file> <log-file> <pid-file>" && exit 1 
+
+echo "PLAYOUT-START: ( $@ $AUDIO_FILE >>$LOG_FILE 2>&1 ) & echo \$! > $PID_FILE" >>$LOG_FILE 0<&-
+( $@ $AUDIO_FILE >>$LOG_FILE 0</dev/null 2>&1 ) & echo $! > $PID_FILE
