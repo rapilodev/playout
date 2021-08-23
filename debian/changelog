@@ -1,3 +1,9 @@
+playout (0.23~hirsute) hirsute; urgency=medium
+  * Process::execute do not use shell to execute process
+  * etc/playout/playout-example.conf: rename to avoid to overwrite
+  * bin/playout-start: add start helper to avoid bash
+ -- Milan Chrobok <mc@radiopiloten.de>  Mon, 23 Aug 2021 21:05:18 +0200
+
 playout (0.22.1) bionic; urgency=medium
   * remove time measurement for silence detection
   * set debian/control version to 5.4.1
