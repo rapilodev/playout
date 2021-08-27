@@ -195,7 +195,7 @@ sub run() {
 
 		my @events = ( $next, $current, $previous );
 		for my $event (@events) {
-			Log::debug( 1, sprintf( "\n%-9s %s", uc( $event->{state} ), Shows::show($event) ) );
+			Log::debug( 2, sprintf( "\n%-9s %s", uc( $event->{state} ), Shows::show($event) ) );
 			my $show = Shows::getStatus($event);
 			next unless defined $show;
 
