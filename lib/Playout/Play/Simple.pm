@@ -79,7 +79,7 @@ sub prepare {
         # read audio file
         Log::debug( 0, "prepare '" . $audioFile . "'" );
         if ( -e $audioFile ) {
-            open my $file, '<', $audioFile;
+            open my $file, '<', $audioFile or return Log::warn "cannot read $audioFile";
             if ($file) {
                 my $line = '';
                 read( $file, $line, 1000 * 1000 );
@@ -166,8 +166,8 @@ sub cut {
     # set playout file to original file
     if ( defined $event->{url} ) {
 
-        # for streams
-        $event->{playoutFile} = $event->{url};
+        # for streams append start date to identify pid file
+        $event->{playoutFile} = $event->{url} . '#' . ($event->{start} =~ s{[\D]}{\-}gr);
     } else {
         $event->{playoutFile} = $event->{file};
 
