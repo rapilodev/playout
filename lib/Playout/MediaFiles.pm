@@ -556,7 +556,7 @@ sub parseStreamFile {
     my $result = shift || {};
 
     Log::debug( 1, "parse playlist $filename" );
-    open (my $file, '<', $filename) or Log::warn qq{could not read "$filename"}, return;
+    open (my $file, '<', $filename) or return Log::warn qq{could not read "$filename"};
     
     while (my $line = <$file>) {
         unless ( defined $result->{duration} ) {
@@ -570,8 +570,11 @@ sub parseStreamFile {
             my $url = $line;
             $url =~ s/\s+$//g;
             $url =~ s/^\s+//g;
-            $result->{url}         = $url unless defined $result->{url};
-            $result->{fallbackUrl} = $url unless defined $result->{fallbackUrl};
+            if (!defined $result->{url}){
+                $result->{url}         = $url
+            } elsif (!defined $result->{fallbackUrl}){
+                $result->{fallbackUrl} = $url
+            }
         }
     }
     close $file;
@@ -730,7 +733,7 @@ sub getDataFromPlotRms {
         return ( $entry, $error );
     }
 
-    return ( $entry, $error );
+    return ( $entry, undef );
 }
 
 # get metadata using soxi
@@ -741,7 +744,7 @@ sub getDurationFromSoxi {
     my $error = "could not get duration from soxi";
     Log::info(qq{get audio duration for "$path" from soxi});
     if ( $path =~ /\.(mp3|flac)$/i ) {
-        my $exitCode = Process::execute my $result, '<+ERR', 'soxi' '-D', $path;
+        Process::execute my $result, '<+ERR', 'soxi', '-D', $path;
         if ( $result =~ /([\d\.]+)/ ) {
             $entry->{duration} = $1;
             $error = undef;
