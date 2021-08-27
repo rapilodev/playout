@@ -32,14 +32,14 @@ sub getPidFile {
 # on multiple pids use the last one
 sub getPid {
     my $pidFile = shift;
-
     return 0 unless -e $pidFile;
-
     my $pid = 0;
-    open my $file, "<", $pidFile or Log::error("could not open $pidFile"),return;
-    while ( my $pid = <$file> ) {}
+    open my $file, "<", $pidFile or return Log::error("could not open $pidFile");
+    while ( my $line = <$file> ) {
+        chomp $line;
+        $pid = $line if $line=~/^\d+$/;
+    }
     close $file;
-    $pid =~ s/[^\d]//g;
     return $pid;
 }
 
@@ -75,7 +75,7 @@ sub writePidFile {
     Log::warn($error) if defined $error;
 
     Log::info(qq{write pid file "$pidFile"});
-    open( my $file, ">", $pidFile ) or Log::warn(qq{cannot write pid file "$pidFile"}), return;
+    open( my $file, ">", $pidFile ) or return Log::warn(qq{cannot write pid file "$pidFile"});
     print $file "$pid";
     close($file);
     return;
