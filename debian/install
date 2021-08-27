@@ -5,7 +5,7 @@ bin/playout /usr/bin
 bin/playout-lite /usr/bin
 etc/init/playout.conf /etc/init
 etc/logrotate.d/playout /etc/logrotate.d
-etc/playout/playout.conf /etc/playout
+etc/playout/playout-example.conf /etc/playout
 etc/playout/playout-lite-example.conf /etc/playout
 etc/systemd/system/playout.service /etc/systemd/system
 lib/Playout/Play/Liquidsoap.pm /usr/share/perl5/Playout/Play
