@@ -97,9 +97,9 @@ sub getStatus {
     return unless defined $show->{start};
 
     Log::header("Shows::getStatus()");
-    Log::debug( 2, 'PREV: "' . ( $show->{prev} || '' ) . '"' );
+    Log::debug( 3, 'PREV: "' . ( $show->{prev} || '' ) . '"' );
     Log::debug( 2, 'CURR: "' . ( $show->{file} || '' ) . '"' );
-    Log::debug( 2, 'NEXT: "' . ( $show->{next} || '' ) . '"' );
+    Log::debug( 3, 'NEXT: "' . ( $show->{next} || '' ) . '"' );
 
     my $next   = getNext($show);
     my $start  = $show->{start};
