@@ -1,3 +1,17 @@
+playout (0.25~hirsuteubuntu1) hirsute; urgency=medium
+  * fixup! bin/playout-start: add start helper to avoid bash
+  * /etc/init/playout.conf: remove upstart support
+  * lib/Playout/Shows.pm: log seconds only
+  * fixup! /etc/init/playout.conf: remove upstart support
+  * debian/control: update
+  * etc/playout/playout-example.conf: remove +x attr
+  * less logging
+  * lib/Playout/Log.pm: remove header()
+  * lib/Playout/Log.pm: truncate ms on showing current event
+  * lib/Playout/Shows.pm: fix overlap output
+  * lib/Playout/MediaFiles.pm: output files depending on debug level
+ -- Milan Chrobok <mc@radiopiloten.de>  Sat, 28 Aug 2021 18:27:57 +0200
+
 playout (0.24~hirsute) hirsute; urgency=medium
   * lib/Playout/Playout.pm: decrease log level
   * lib/Playout/MediaFiles.pm: fix fallback URL
