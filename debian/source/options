@@ -1,2 +1,1 @@
-compression = gzip
-tar-ignore = ".git/*"
+tar-ignore = ".git"
