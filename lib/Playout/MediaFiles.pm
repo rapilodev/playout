@@ -122,16 +122,7 @@ sub listAudio {
     for my $path ( sort keys %$cache ) {
         next if $path eq 'date';
         next if $path eq 'info';
-        Log::info( sprintf( "% 4d secs %s %s", $cache->{$path}->{duration} || 0, $path || '', $cache->{$path}->{playoutFile} || '' ) );
-    }
-}
-
-sub listInfo {
-    Log::info("show info");
-    for my $datetime ( sort keys %{ $cache->{info} } ) {
-        for my $path ( sort keys %{ $cache->{info}->{$datetime} } ) {
-            Log::info( sprintf( "%s %s", $datetime, $path ) );
-        }
+        Log::debug( 2, sprintf( "% 4d secs %s %s", $cache->{$path}->{duration} || 0, $path || '', $cache->{$path}->{playoutFile} || '' ) );
     }
 }
 
