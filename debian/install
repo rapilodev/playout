@@ -4,7 +4,6 @@ bin/playout-sync /usr/bin
 bin/playout-sync-lite /usr/bin
 bin/playout /usr/bin
 bin/playout-lite /usr/bin
-etc/init/playout.conf /etc/init
 etc/logrotate.d/playout /etc/logrotate.d
 etc/playout/playout-example.conf /etc/playout
 etc/playout/playout-lite-example.conf /etc/playout
