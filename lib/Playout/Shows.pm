@@ -179,7 +179,8 @@ show schedule duration } . sprintf( "%.2f minutes, %.2f seconds", $scheduleDurat
     my $timeTillEnd = $audio_end_time->subtract_datetime($now);
     $result->{timeTillEnd} = Time::durationToSecondsWithMillis($timeTillEnd);
 
-    my $info = "start:$result->{runDuration} end:$result->{timeTillEnd} switch:$result->{timeTillSwitch}";
+    my $info = sprintf( "start:%d end:%d duration:%d switch:%d", $result->{timeTillStart},
+        $result->{timeTillEnd}, $result->{runDuration}, $result->{timeTillSwitch});
 
     #exit on invalid time range
     if ( $scheduleDuration <= 0 ) {
