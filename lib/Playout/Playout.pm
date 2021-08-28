@@ -145,7 +145,7 @@ sub run() {
 	}
 
 	while (1) {
-		Log::header("playout");
+		Log::debug( 3, "playout");
 
 		if ( Config::hasChanged() ) {
 			Log::debug( 1, "config has changed" );

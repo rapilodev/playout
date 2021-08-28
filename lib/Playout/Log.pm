@@ -71,15 +71,6 @@ sub info($) {
     }
 }
 
-# print method header (for debug level > 1)
-sub header($) {
-    return unless ( $debug > 1 );
-    my $date = getDateTime();
-    print Term::ANSIColor::color 'blue';
-    print "$date --enter-- " . $_[0] . "\n";
-    print Term::ANSIColor::color 'reset';
-}
-
 # print error
 sub error($) {
     my $date = getDateTime();
