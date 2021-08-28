@@ -199,7 +199,7 @@ sub run() {
 			my $show = Shows::getStatus($event);
 			next unless defined $show;
 
-			Log::objectInline( 1, $show ) if $event == $current;
+			Log::roundInline( 1, $show ) if $event == $current;
 
 			if ( $show->{isError} ) {
 				Log::info('isError');

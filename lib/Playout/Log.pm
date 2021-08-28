@@ -124,6 +124,34 @@ sub object {
     return $line;
 }
 
+sub roundInline {
+    my $level = shift;
+    my $entry = shift;
+    my $depth = shift || 0;
+
+    return if $debug == 0;
+    return unless $debug > $level;
+
+    my $date = getDateTime();
+
+    my $line = '';
+    if ( ref($entry) eq 'SCALAR' ) {
+        $line .= "$entry" =~ s{\.\d+}{}gr;
+    } elsif ( ref($entry) eq 'HASH' ) {
+        $line .= "{" . join( ", ", map { sprintf( "%s=%s", $_, "$entry->{$_}" =~ s{\.\d+}{}gr ) } ( sort keys %$entry ) ) . '}';
+    } elsif ( ref($entry) eq 'ARRAY' ) {
+        my $i = 0;
+        for my $value (@$entry) {
+            $line .= "," if $i > 0;
+            $line .= "[$i] : \n";
+            $line .= objectInline( $level, $value, $depth + 1 );
+            $i++;
+        }
+    }
+    print "$date --OBJECT- $level     " . $line . "\n" if $depth == 0;
+    return $line;
+}
+
 sub objectInline {
     my $level = shift;
     my $entry = shift;
@@ -139,7 +167,7 @@ sub objectInline {
         $line .= $entry;
     }
     if ( ref($entry) eq 'HASH' ) {
-        $line .= "{" . join( ", ", map { sprintf( "%s=%s", $_, $entry->{$_} ) } ( keys %$entry ) ) . '}';
+        $line .= "{" . join( ", ", map { sprintf( "%s=%s", $_, $entry->{$_} ) } ( sort keys %$entry ) ) . '}';
     }
     if ( ref($entry) eq 'ARRAY' ) {
         my $i = 0;
