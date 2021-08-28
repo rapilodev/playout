@@ -1,6 +1,5 @@
 #! /bin/sh
 
-
 if [ "$1" = "purge" ] ; then
     if [ -e /etc/playout/playout.conf ]; then
         rm /etc/playout/playout.conf

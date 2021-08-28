@@ -1,26 +1,5 @@
 #!/bin/bash
 
-isUpstart() {
-    /sbin/init --version 2>/dev/null | grep -q 'upstart'
-    #echo "result=$?"
-    if [ "$?" = "0" ]; then
-        return 0
-    else 
-        return 1
-    fi
-}
-
-isSystemd() {
-    /bin/systemctl 2>/dev/null | grep -q '\-\.mount'
-    #echo "result=$?"
-    if [ "$?" = "0" ]; then
-        return 0
-    else 
-        return 1
-    fi
-}
-
-
 if ! getent group playout >/dev/null; then
 	addgroup --system playout
 fi
@@ -53,14 +32,8 @@ fi
 [ -f /etc/logrotate/playout ] && chgrp playout /etc/logrotate.d/playout
 [ -f /etc/init/playout.conf ] && chgrp playout /etc/init/playout.conf	
 
-if isUpstart; then
-	start playout
-fi
-
-if isSystemd; then
-	systemctl start playout
-	systemctl enable playout
-fi
+systemctl start playout
+systemctl enable playout
 
 #DEBHELPER#
 exit 0
