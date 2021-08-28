@@ -137,7 +137,7 @@ sub getStatus {
             $end_time = Time::getUtcDatetime($end);
         }
         if ( $gap > 0 ) {
-            Log::warn( qq{gap after show: } . Time::secondsToTime($gap) . qq{audio file "$show->{file}"} )
+            Log::warn( qq{gap after show=} . Time::secondsToTime($gap) . qq{, audio file "$show->{file}"} )
               if $gap < 4 * Time::getHourDef();
             $end_time = Time::getUtcDatetime($end);
         }
