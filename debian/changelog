@@ -1,3 +1,16 @@
+playout (0.24~hirsute) hirsute; urgency=medium
+  * lib/Playout/Playout.pm: decrease log level
+  * lib/Playout/MediaFiles.pm: fix fallback URL
+  * lib/Playout/Shows.pm: reduce debug level for prev and next
+  * lib/Playout/Play/Simple.pm: add timestamp to URLs
+  * debian/install fix config
+  * lib/Playout/Process.pm: fix readPid
+ -- Milan Chrobok <mc@radiopiloten.de>  Fri, 27 Aug 2021 22:05:18 +0200
+
+playout (0.23.1~hirsute) hirsute; urgency=medium
+  * fix +etc/playout/playout-example.conf
+ -- Milan Chrobok <mc@radiopiloten.de>  Tue, 24 Aug 2021 22:05:18 +0200
+
 playout (0.23~hirsute) hirsute; urgency=medium
   * Process::execute do not use shell to execute process
   * etc/playout/playout-example.conf: rename to avoid to overwrite
