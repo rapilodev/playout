@@ -23,14 +23,14 @@ sub getStartUpDuration {
 # result contains a pointer to the previous and next show
 # if no show is running currently reuslt will contain pointer to next show only
 sub getRunning {
-    Log::header("Shows::getRunning()");
+    Log::debug( 3, "Shows::getRunning()");
 
     my $datetime_utc = Time::getUtcDatetime();
 
     my $today     = Time::getToday($datetime_utc);
     my $prev_date = Time::getYesterday($datetime_utc);
     my $next_date = Time::getTomorrow($datetime_utc);
-    Log::debug( 1, "today " . $today );
+    Log::debug( 3, "today " . $today );
 
     my $dates = [ $prev_date, $today, $next_date ];
 
@@ -96,7 +96,7 @@ sub getStatus {
     return unless defined $show;
     return unless defined $show->{start};
 
-    Log::header("Shows::getStatus()");
+    Log::debug( 3, "Shows::getStatus()");
     Log::debug( 3, 'PREV: "' . ( $show->{prev} || '' ) . '"' );
     Log::debug( 2, 'CURR: "' . ( $show->{file} || '' ) . '"' );
     Log::debug( 3, 'NEXT: "' . ( $show->{next} || '' ) . '"' );

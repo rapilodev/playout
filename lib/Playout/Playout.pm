@@ -156,13 +156,13 @@ sub run() {
 		    maxProcessing => 1
 		});
 
-		Log::debug( 1, "next full media check in " . sprintf( "%.02f secs", $nextFullScan ) );
+		Log::debug( 3, "next full media check in " . sprintf( "%.02f secs", $nextFullScan ) );
 		my $nextShortScan = MediaFiles::getNextShortScan();
-		Log::debug( 1, "next short check in " . sprintf( "%.02f secs", $nextShortScan ) );
+		Log::debug( 3, "next short check in " . sprintf( "%.02f secs", $nextShortScan ) );
 
 		my $skipShortScan = 0;
 		if ( $nextFullScan > 0 ) {
-			Log::debug( 1, "next full media check in " . sprintf( "%.02f secs", $nextFullScan ) );
+			Log::debug( 3, "next full media check in " . sprintf( "%.02f secs", $nextFullScan ) );
 		} else {
 			my $updateAudio = MediaFiles::fullScan({
 			    maxProcessing => 1,
@@ -175,7 +175,7 @@ sub run() {
 		if ( $skipShortScan == 0 ) {
 			my $nextShortScan = MediaFiles::getNextShortScan();
 			if ( $nextShortScan > 0 ) {
-				Log::debug( 1, "next short check in " . sprintf( "%.02f secs", $nextShortScan ) );
+				Log::debug( 3, "next short check in " . sprintf( "%.02f secs", $nextShortScan ) );
 			} else {
 				my $updateAudio = MediaFiles::shortScan({
 				    maxProcessing => 1,
@@ -199,7 +199,7 @@ sub run() {
 			my $show = Shows::getStatus($event);
 			next unless defined $show;
 
-			Log::objectInline( 1, $show );
+			Log::objectInline( 1, $show ) if $event == $current;
 
 			if ( $show->{isError} ) {
 				Log::info('isError');

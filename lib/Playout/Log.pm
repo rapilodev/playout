@@ -117,7 +117,7 @@ sub object {
         $line .= "$date --OBJECT- $level   $entry\n";
     }
     if ( ref($entry) eq 'HASH' ) {
-        for my $key ( keys %$entry ) {
+        for my $key ( sort keys %$entry ) {
             $line .= sprintf( "$date --entry-- $level  %-18s = %s\n", $key, $entry->{$key} );
         }
     }
