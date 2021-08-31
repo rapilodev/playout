@@ -692,7 +692,7 @@ sub getDataFromPlotRms {
     for my $suffix ( 'png', 'svg' ) {
         my $imageFile = "$targetDir/$targetFile.$suffix";
 
-        my $exitCode = Process::execute( my $result, '<+ERR', 'plotRms', '-i', $path, '-o', $imageFile);
+        my $exitCode = Process::execute($result, '<+ERR', 'plotRms', '-i', $path, '-o', $imageFile);
         # this will not be handled as reason for fallback to other detection method
         if ( $exitCode != 0 ) {
             my $error = qq{could not analyse and plot "$path" by 'plotRms', exitCode=$exitCode};
