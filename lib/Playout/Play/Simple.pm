@@ -167,7 +167,7 @@ sub cut {
     if ( defined $event->{url} ) {
 
         # for streams append start date to identify pid file
-        $event->{playoutFile} = $event->{url} . '#' . ($event->{start} =~ s{[\D]}{\-}gr);
+        $event->{playoutFile} = $event->{url} . '?#' . ($event->{start} =~ s{[\D]}{\-}gr);
     } else {
         $event->{playoutFile} = $event->{file};
 
