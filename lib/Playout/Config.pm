@@ -22,6 +22,7 @@ sub getConfigFile {
 
 sub get {
     my $key = shift;
+    die "missing $key in config " . getConfigFile() unless $config->{$key};
     return $config->{$key};
 }
 
