@@ -19,6 +19,10 @@ use Playout::Config();
 use Playout::MediaFiles();
 use Playout::Time();
 
+use Fcntl qw(:flock);
+flock DATA, LOCK_EX|LOCK_NB or die "Unable to lock file $!";
+
+
 my $fileTypes = MediaFiles::getSupportedFormats();
 
 my $configFile = undef;
@@ -515,3 +519,5 @@ Events require fields <uploaded_at> with timestamp and <path> with an relative p
 
 |;
 }
+
+__DATA__
