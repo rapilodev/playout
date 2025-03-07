@@ -51,7 +51,7 @@ fullScanInterval   scan mediaDir for changes every <shortScanInterval> seconds.
 
 timeZone           Leap seconds and winter/summer time changeover are supported for the selected time zone, default is Germany/Berlin.
 
-playCommand        the command to be executed to play (cvlc by default).
+playCommand        the command to be executed to play (ffmpeg by default).
                    You can use following keywords in the playCommand:
 
                    AUDIO_FILE  name of the audio file to be played
@@ -62,7 +62,7 @@ playCommand        the command to be executed to play (cvlc by default).
                    like schedule playing videos or sending mails...
 
 initCommand        command to be run initially
-                   for example use "killall vlc" to stop all vlc players on starting the service.
+                   for example use "killall ffmpeg" to stop all ffmpeg players on starting the service.
 
 bufferDelay        if set to an value greater than 0 audio files will be played <bufferDelay> seconds before the scheduled date. 
                    For example, if you have a total audio buffer and streaming delay of 1.5 seconds, 
@@ -112,9 +112,7 @@ use Playout::Shows();
 use Playout::Time();
 use Playout::Process();
 use Playout::Upload();
-use Playout::Play::Simple();
-use Playout::Play::VlcServer();
-use Playout::Play::Liquidsoap();
+use Playout::Player();
 
 use base 'Exporter';
 our @EXPORT_OK = ('run');
@@ -130,19 +128,7 @@ sub getPlayer {
 }
 
 sub run() {
-    my $interface = Config::get('interface');
-    unless ( defined $interface ) {
-        Log::error('no interface configured at config');
-        exit 1;
-    }
-
-    if ( $interface eq 'vlcServer' ) {
-        $player = Play::VlcServer->new( Config::get('vlcServer') );
-    } elsif ( $interface eq 'liquidsoap' ) {
-        $player = Play::Liquidsoap->new( Config::get('liquidsoap') );
-    } else {
-        $player = Play::Simple->new( Config::get('simple') );
-    }
+   $player = Player->new( Config::get('player') );
 
     while (1) {
         Log::debug( 3, "playout");

@@ -1,12 +1,10 @@
-package Play::Simple;
+package Player;
 
 use warnings;
 use strict;
 use Playout::MediaFiles();
 use Playout::Process();
 use Playout::AudioCut();
-
-use base 'Play';
 
 # tempDir
 # playCommand

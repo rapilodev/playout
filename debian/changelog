@@ -1,3 +1,8 @@
+playout (0.28~noble) noble; urgency=medium
+  * remove vlc and liquidsoap support. 
+    in config file you need to rename simple section to player 
+ -- Milan Chrobok <mc@radiopiloten.de>  Sat, 08 Mar 2025 12:23:26 +0200
+
 playout (0.27~noble) noble; urgency=medium
   * fix example
  -- Milan Chrobok <mc@radiopiloten.de>  Thu, 01 May 2024 15:29:26 +0200

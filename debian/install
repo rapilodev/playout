@@ -8,14 +8,8 @@ etc/logrotate.d/playout /etc/logrotate.d
 etc/playout/playout-example.conf /etc/playout
 etc/playout/playout-lite-example.conf /etc/playout
 etc/systemd/system/playout.service /etc/systemd/system
-lib/Playout/Play/Liquidsoap.pm /usr/share/perl5/Playout/Play
-lib/Playout/Play/Simple.pm /usr/share/perl5/Playout/Play
-lib/Playout/Play/VlcServer.pm /usr/share/perl5/Playout/Play
 lib/Playout/AudioCut.pm /usr/share/perl5/Playout
 lib/Playout/Config.pm /usr/share/perl5/Playout
-lib/Playout/LiquidsoapClient.pm /usr/share/perl5/Playout
-lib/Playout/LiquidsoapFile.pm /usr/share/perl5/Playout
-lib/Playout/LiquidsoapStream.pm /usr/share/perl5/Playout
 lib/Playout/Log.pm /usr/share/perl5/Playout
 lib/Playout/MediaFiles.pm /usr/share/perl5/Playout
 lib/Playout/Play.pm /usr/share/perl5/Playout
