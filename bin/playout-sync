@@ -22,7 +22,6 @@ use Playout::Time();
 use Fcntl qw(:flock);
 flock DATA, LOCK_EX|LOCK_NB or die "Unable to lock file $!";
 
-
 my $fileTypes = MediaFiles::getSupportedFormats();
 
 my $configFile = undef;
@@ -467,56 +466,74 @@ sub saveImage {
 
 sub getUsage {
     return qq|
-usage: $0 --from yyyy-mm-dd --till yyyy-mm-dd --verbose [level]
+Usage:
+  $0 --from yyyy-mm-dd --till yyyy-mm-dd --verbose [level]
 
-playout-sync imports events from an external data source. It creates all
-necessary directories (with date and time in the path). After the directories 
-have been created, only the audio files have to be put into the directories to 
-schedule them for playback.
+Description:
+  playout-sync imports event schedules from an external JSON data source 
+  and organizes them into directories based on their playback times. Once 
+  directories are created, place the corresponding audio files inside to 
+  schedule them for automatic playback.
 
-The dates are read from a JSON source <syncGetScheduleUrl> configured in 
-/etc/playout/playout.conf. You can filter the date range by using the --from 
-and --till parameters, which in turn append '&from_date=yyyy-mm-dd' and 
-'&till_date=yyyy-mm-dd' to the URL.
+How It Works:
+  - The JSON source URL is configured in /etc/playout/playout.conf under 
+    <syncGetScheduleUrl>.
+  - Use --from and --till to filter events, appending '&from_date=yyyy-mm-dd' 
+    and '&till_date=yyyy-mm-dd' to the URL.
+  - The media archive directory should have correct permissions:
+  
+    chgrp playout /mnt/archive/playout
+    chmod g+s /mnt/archive/playout
 
-The media archive directory should have group playout, permissions 775 and the 
-group setgid bit set. The user should be added to the group playout.
+  - The group should be `playout`, with permissions `775` and the setgid bit 
+    enabled. The user should be added to the `playout` group.
 
-chgrp playout /mnt/archive/playout
-chmod g+s /mnt/archive/playout
+JSON Source Format:
+  The JSON document should contain an "events" list, where each event includes:
+    - `start_datetime`: Defines the directory structure (yyyy-mm-ddThh:mm:ss).
+    - `series_name`, `title`, `event_id`: Used to create the .info file.
+    - `excerpt`, `content`, `location`: Stored in the .info file.
+    - `image` (optional): If provided, it is downloaded into the directory.
 
-The URL response document should consist of an "Events" list of individual 
-playout events. Directories are created from the event attribute 
-"start_datetime" attribute [yyyyy-mm-ddThh:mm:ss]. The "series_name", "title", 
-"event_id" attributes are used to create a text info file name. Each info file 
-contains the attributes "extract", "content", "location". If a URL attribute 
-"image" is specified, the image is downloaded and placed in the directory.
+Example JSON:
+  {
+      "events": [
+          {
+              "start_datetime": "2025-06-10T08:30:00",
+              "series_name": "Morning Show",
+              "title": "Daily News Update",
+              "event_id": "101",
+              "excerpt": "Latest headlines and news analysis.",
+              "content": "A deeper look into today's top stories.",
+              "location": "Studio A",
+              "image": "http://example.com/news.jpg"
+          },
+          {
+              "start_datetime": "2025-06-10T15:00:00",
+              "series_name": "Music Hour",
+              "title": "Rock Classics",
+              "event_id": "102",
+              "excerpt": "The best rock hits from the 70s and 80s.",
+              "content": "A curated playlist of legendary rock anthems.",
+              "location": "Studio B",
+              "image": "http://example.com/rock.jpg"
+          }
+      ]
+  }
 
-Example of a JSON source document:
-{
-    "events":[
-        {
-            "start_datetime":"2014-03-14T20:00:00"
-            "series_name":"series A", "title":"A", "event_id":"1",
-            "excerpt":"short text A", "content":"long text A", "location":"at home",
-            "image":"http://localhost/imageA.png"
-        },{
-            "start_datetime":"2014-03-14T21:00:00"
-            "series_name":"series B", "title":"B", "event_id":"2",
-            "excerpt":"short text B", "content":"long text B", "location":"at work",
-            "image":"http://localhost/imageB.png"
-        }
-    ]
-}
+Example Output:
+  The following directories will be created in mediaDir:
 
-This example will create 2 directories 2014/03/14/20-00 and 2014/03/14/21-00 at the mediaDir.
-A text file .info and the downloaded image will be put into each directory.
-if you put audio files at a directory, playout will play them at scheduled time.
+    2025/06/10/08-30/
+    2025/06/10/15-00/
+    2025/06/10/20-00/
 
-If the source contains links to remote audio files there will be downloaded relative to <syncGetRecordingUrl>.
-Optionally basic authentication can be used as "user:password" in <syncGetRecordingUrl>.
-Events require fields <uploaded_at> with timestamp and <path> with an relative path.  
+  Each directory will contain:
+    - A `.info` file with event details.
+    - The downloaded event image (if specified).
 
+  When audio files are placed in these directories, `playout` will play 
+  them at the scheduled time.
 |;
 }
 
