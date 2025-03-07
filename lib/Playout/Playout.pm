@@ -126,213 +126,213 @@ my $player = undef;
 # cache finished shows by filename and modification date to prevent multiple file duration detection
 
 sub getPlayer {
-	return $player;
+    return $player;
 }
 
 sub run() {
-	my $interface = Config::get('interface');
-	unless ( defined $interface ) {
-		Log::error('no interface configured at config');
-		exit 1;
-	}
+    my $interface = Config::get('interface');
+    unless ( defined $interface ) {
+        Log::error('no interface configured at config');
+        exit 1;
+    }
 
-	if ( $interface eq 'vlcServer' ) {
-		$player = Play::VlcServer->new( Config::get('vlcServer') );
-	} elsif ( $interface eq 'liquidsoap' ) {
-		$player = Play::Liquidsoap->new( Config::get('liquidsoap') );
-	} else {
-		$player = Play::Simple->new( Config::get('simple') );
-	}
+    if ( $interface eq 'vlcServer' ) {
+        $player = Play::VlcServer->new( Config::get('vlcServer') );
+    } elsif ( $interface eq 'liquidsoap' ) {
+        $player = Play::Liquidsoap->new( Config::get('liquidsoap') );
+    } else {
+        $player = Play::Simple->new( Config::get('simple') );
+    }
 
-	while (1) {
-		Log::debug( 3, "playout");
+    while (1) {
+        Log::debug( 3, "playout");
 
-		if ( Config::hasChanged() ) {
-			Log::debug( 1, "config has changed" );
-			updateConfig();
-		}
+        if ( Config::hasChanged() ) {
+            Log::debug( 1, "config has changed" );
+            updateConfig();
+        }
 
-		my $nextFullScan = MediaFiles::getNextFullScan({
-		    maxProcessing => 1
-		});
+        my $nextFullScan = MediaFiles::getNextFullScan({
+            maxProcessing => 1
+        });
 
-		Log::debug( 3, "next full media check in " . sprintf( "%.02f secs", $nextFullScan ) );
-		my $nextShortScan = MediaFiles::getNextShortScan();
-		Log::debug( 3, "next short check in " . sprintf( "%.02f secs", $nextShortScan ) );
+        Log::debug( 3, "next full media check in " . sprintf( "%.02f secs", $nextFullScan ) );
+        my $nextShortScan = MediaFiles::getNextShortScan();
+        Log::debug( 3, "next short check in " . sprintf( "%.02f secs", $nextShortScan ) );
 
-		my $skipShortScan = 0;
-		if ( $nextFullScan > 0 ) {
-			Log::debug( 3, "next full media check in " . sprintf( "%.02f secs", $nextFullScan ) );
-		} else {
-			my $updateAudio = MediaFiles::fullScan({
-			    maxProcessing => 1,
-			    expires => [ time + 15 * 60, Shows::getNextStart() ] });
-			Upload::fullUpload() if $updateAudio > 0;
-			MediaFiles::listAudio() if Log::getLevel() > 1;
-			$skipShortScan = 1;
-		}
+        my $skipShortScan = 0;
+        if ( $nextFullScan > 0 ) {
+            Log::debug( 3, "next full media check in " . sprintf( "%.02f secs", $nextFullScan ) );
+        } else {
+            my $updateAudio = MediaFiles::fullScan({
+                maxProcessing => 1,
+                expires => [ time + 15 * 60, Shows::getNextStart() ] });
+            Upload::fullUpload() if $updateAudio > 0;
+            MediaFiles::listAudio() if Log::getLevel() > 1;
+            $skipShortScan = 1;
+        }
 
-		if ( $skipShortScan == 0 ) {
-			my $nextShortScan = MediaFiles::getNextShortScan();
-			if ( $nextShortScan > 0 ) {
-				Log::debug( 3, "next short check in " . sprintf( "%.02f secs", $nextShortScan ) );
-			} else {
-				my $updateAudio = MediaFiles::shortScan({
-				    maxProcessing => 1,
-				    expires => [ time + 15 * 60, Shows::getNextStart() ]
-				});
-				Upload::shortUpload()   if $updateAudio > 0;
-				MediaFiles::listAudio() if Log::getLevel() > 1;
-			}
-		}
+        if ( $skipShortScan == 0 ) {
+            my $nextShortScan = MediaFiles::getNextShortScan();
+            if ( $nextShortScan > 0 ) {
+                Log::debug( 3, "next short check in " . sprintf( "%.02f secs", $nextShortScan ) );
+            } else {
+                my $updateAudio = MediaFiles::shortScan({
+                    maxProcessing => 1,
+                    expires => [ time + 15 * 60, Shows::getNextStart() ]
+                });
+                Upload::shortUpload()   if $updateAudio > 0;
+                MediaFiles::listAudio() if Log::getLevel() > 1;
+            }
+        }
 
-		my $current = Shows::getRunning();
-		$current->{state} = 'current:';
-		my $next = Shows::getNext($current);
-		$next->{state} = 'next:';
-		my $previous = Shows::getPrevious($current);
-		$previous->{state} = 'previous:';
+        my $current = Shows::getRunning();
+        $current->{state} = 'current:';
+        my $next = Shows::getNext($current);
+        $next->{state} = 'next:';
+        my $previous = Shows::getPrevious($current);
+        $previous->{state} = 'previous:';
 
-		my @events = ( $next, $current, $previous );
-		for my $event (@events) {
-			Log::debug( 2, sprintf( "\n%-9s %s", uc( $event->{state} ), Shows::show($event) ) );
-			my $show = Shows::getStatus($event);
-			next unless defined $show;
+        my @events = ( $next, $current, $previous );
+        for my $event (@events) {
+            Log::debug( 2, sprintf( "\n%-9s %s", uc( $event->{state} ), Shows::show($event) ) );
+            my $show = Shows::getStatus($event);
+            next unless defined $show;
 
-			Log::roundInline( 1, $show ) if $event == $current;
+            Log::roundInline( 1, $show ) if $event == $current;
 
-			if ( $show->{isError} ) {
-				Log::info('isError');
-			} elsif ( $show->{isOver} ) {
-				$player->stop($event);
-			} elsif ( $show->{isRunning} ) {
+            if ( $show->{isError} ) {
+                Log::info('isError');
+            } elsif ( $show->{isOver} ) {
+                $player->stop($event);
+            } elsif ( $show->{isRunning} ) {
 
-				# stop show if original audio file is removed
-				if ( isFileMissing( $event->{file} ) ) {
-					$player->stop($event);
-					next;
-				}
+                # stop show if original audio file is removed
+                if ( isFileMissing( $event->{file} ) ) {
+                    $player->stop($event);
+                    next;
+                }
 
-				if ( $show->{timeTillEnd} > 15 ) {
-					unless ( $player->isRunning( $event, $show ) ) {
-						$player->play( $event, $show );
-					}
-				}
-			} elsif ( $show->{isNotStartedYet} ) {
-				if ( isFileMissing( $event->{file} ) ) {
-					Log::warn(qq{missing file "$event->{file}"});
-					MediaFiles::forceShortScan();
-					next;
-				}
-				if ( $show->{timeTillStart} < 30 ) {
+                if ( $show->{timeTillEnd} > 15 ) {
+                    unless ( $player->isRunning( $event, $show ) ) {
+                        $player->play( $event, $show );
+                    }
+                }
+            } elsif ( $show->{isNotStartedYet} ) {
+                if ( isFileMissing( $event->{file} ) ) {
+                    Log::warn(qq{missing file "$event->{file}"});
+                    MediaFiles::forceShortScan();
+                    next;
+                }
+                if ( $show->{timeTillStart} < 30 ) {
 
-					#set playout file ($event->file)
-					$player->prepare($event);
-					$show = Shows::getStatus($event);
-					sleep( $show->{timeTillStart} ) if $show->{timeTillStart} > 0;
-					$player->play( $event, $show );
-					sleep(3);
-					next;
-				}
+                    #set playout file ($event->file)
+                    $player->prepare($event);
+                    $show = Shows::getStatus($event);
+                    sleep( $show->{timeTillStart} ) if $show->{timeTillStart} > 0;
+                    $player->play( $event, $show );
+                    sleep(3);
+                    next;
+                }
 
-			}
-		}
-		sleep 10;
-	}
-	return;
+            }
+        }
+        sleep 10;
+    }
+    return;
 }
 
 sub isFileMissing {
-	my $audioFile = shift || '';
+    my $audioFile = shift || '';
 
-	# skip if file is empty
-	if ( $audioFile eq '' ) {
-		Log::warn("skip\tfile is empty");
-		return 1;
-	}
+    # skip if file is empty
+    if ( $audioFile eq '' ) {
+        Log::warn("skip\tfile is empty");
+        return 1;
+    }
 
-	# stop show if file has been removed
-	unless ( -e $audioFile ) {
-		Log::warn(qq{skip\taudio file has been moved or removed: "$audioFile"});
-		MediaFiles::forceShortScan();
-		return 1;
-	}
-	return 0;
+    # stop show if file has been removed
+    unless ( -e $audioFile ) {
+        Log::warn(qq{skip\taudio file has been moved or removed: "$audioFile"});
+        MediaFiles::forceShortScan();
+        return 1;
+    }
+    return 0;
 }
 
 # read configuration, run housekeeping and kill existing players
 sub init {
-	my $options = shift;
+    my $options = shift;
 
-	Log::info("start playout");
+    Log::info("start playout");
 
-	my $configFile = $options->{configFile};
-	$configFile = Config::getConfigFile() unless defined $configFile;
-	Config::setConfigFile($configFile);
+    my $configFile = $options->{configFile};
+    $configFile = Config::getConfigFile() unless defined $configFile;
+    Config::setConfigFile($configFile);
 
-	unless ( -e $configFile ) {
-		Log::error(qq{cannot find config file "$configFile"});
-		exit 1;
-	}
+    unless ( -e $configFile ) {
+        Log::error(qq{cannot find config file "$configFile"});
+        exit 1;
+    }
 
-	unless ( -r $configFile ) {
-		Log::error(qq{cannot read config file "$configFile". Please check file permissions.});
-		exit 1;
-	}
-	Log::info(qq{read config from "$configFile"});
+    unless ( -r $configFile ) {
+        Log::error(qq{cannot read config file "$configFile". Please check file permissions.});
+        exit 1;
+    }
+    Log::info(qq{read config from "$configFile"});
 
-	my ( $config, $error ) = updateConfig($options);
-	exit if ( $error > 0 );
+    my ( $config, $error ) = updateConfig($options);
+    exit if ( $error > 0 );
 
-	AudioCut::removeOldFiles();
-	MediaFiles::init($config);
-	return;
+    AudioCut::removeOldFiles();
+    MediaFiles::init($config);
+    return;
 
 }
 
 sub updateConfig {
-	my $options = shift;
+    my $options = shift;
 
-	return unless Config::hasChanged();
+    return unless Config::hasChanged();
 
-	my $config = Config::update();
+    my $config = Config::update();
 
-	if ( defined $options->{daemon} ) {
+    if ( defined $options->{daemon} ) {
 
-		# set log file from config if customized
-		Log::setLogFile( $config->{logFile} ) if defined $config->{logFile};
-		Log::openLog();
-	}
-	Log::setLevel( $config->{verboseLevel} );
+        # set log file from config if customized
+        Log::setLogFile( $config->{logFile} ) if defined $config->{logFile};
+        Log::openLog();
+    }
+    Log::setLevel( $config->{verboseLevel} );
 
-	Log::info( Config::show() );
-	my $error = Config::check();
+    Log::info( Config::show() );
+    my $error = Config::check();
 
-	# return on errors
-	return $error unless $error == 0;
+    # return on errors
+    return $error unless $error == 0;
 
-	# deploy config values
-	$tempDir = $config->{tempDir};
-	AudioCut::setOutputDirectory($tempDir);
-	MediaFiles::setMediaDir( $config->{mediaDir} );
-	MediaFiles::setCacheFile( $config->{mediaDir} . '/playout.dat' );
-	Time::setTimeZone( $config->{timeZone} );
-	AudioCut::setStartUpDuration( $config->{bufferDelay} );
-	Shows::setStartUpDuration( $config->{bufferDelay} );
-	MediaFiles::setShortScanInterval( $config->{shortScanInterval} );
-	MediaFiles::setFullScanInterval( $config->{fullScanInterval} );
-	MediaFiles::setSyncPlotTargetDir( $config->{syncPlotTargetDir} );
-	Upload::setUrl( $config->{syncSetScheduleUrl} );
+    # deploy config values
+    $tempDir = $config->{tempDir};
+    AudioCut::setOutputDirectory($tempDir);
+    MediaFiles::setMediaDir( $config->{mediaDir} );
+    MediaFiles::setCacheFile( $config->{mediaDir} . '/playout.dat' );
+    Time::setTimeZone( $config->{timeZone} );
+    AudioCut::setStartUpDuration( $config->{bufferDelay} );
+    Shows::setStartUpDuration( $config->{bufferDelay} );
+    MediaFiles::setShortScanInterval( $config->{shortScanInterval} );
+    MediaFiles::setFullScanInterval( $config->{fullScanInterval} );
+    MediaFiles::setSyncPlotTargetDir( $config->{syncPlotTargetDir} );
+    Upload::setUrl( $config->{syncSetScheduleUrl} );
 
-	# add checks
-	$error += MediaFiles::checkMediaDir();
-	return $config, $error;
+    # add checks
+    $error += MediaFiles::checkMediaDir();
+    return $config, $error;
 }
 
 # print current configuration
 sub printConfig {
-	Log::info(
-		qq{
+    Log::info(
+        qq{
 mediaDir            } . MediaFiles::getMediaDir() . qq{
 shortScanInterval   } . MediaFiles::getShortScanInterval() . qq{
 fullScanInterval    } . MediaFiles::getFullScanInterval() . qq{
@@ -344,16 +344,16 @@ verboseLevel        } . Log::getLevel() . qq{
 initCommand        '} . Config::get('initCommand') . qq{'
 playCommand        '} . Config::get('playCommand') . qq{'
 }
-	);
-	return;
+    );
+    return;
 }
 
 # get last modification date of file
 sub getFileModificationDate {
-	my $file = shift;
-	my @stat = stat($file);
-	return undef if scalar(@stat) == 0;
-	return $stat[9];
+    my $file = shift;
+    my @stat = stat($file);
+    return undef if scalar(@stat) == 0;
+    return $stat[9];
 }
 
 # do not delete last line
