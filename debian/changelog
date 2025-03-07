@@ -1,3 +1,7 @@
+playout (0.27~noble) noble; urgency=medium
+  * fix example
+ -- Milan Chrobok <mc@radiopiloten.de>  Thu, 01 May 2024 15:29:26 +0200
+
 playout (0.26~nobleubuntu2) noble; urgency=medium
   * build for noble
  -- Milan Chrobok <mc@radiopiloten.de>  Thu, 01 May 2024 15:29:26 +0200

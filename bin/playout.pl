@@ -14,41 +14,34 @@ use Playout::MediaFiles ();
 
 $| = 1;
 
-my $configFile = undef;
-my $daemon     = undef;
-my $help       = undef;
+my ($configFile, $daemon, $help);
 
 Getopt::Long::GetOptions(
     'c|config=s' => \$configFile,
     'd|daemon'   => \$daemon,
-    'h|help'     => \$help,
+    'h|help'     => \$help
 );
 
-if ( defined $help ) {
+if ($help) {
     print getUsage();
     exit 0;
 }
 
-Playout::init(
-    {
-        configFile => $configFile,
-        daemon     => $daemon,
-    }
-);
+Playout::init({
+    configFile => $configFile,
+    daemon     => $daemon
+});
 
 my $pidFile = Config::get('pidFile');
 
-if ( defined $daemon ) {
-    Process::writePidFile( $pidFile, $$ );
-
-    # reopen log on logrotate
+if ($daemon) {
+    Process::writePidFile($pidFile, $$);
     $SIG{HUP} = \&Log::openLog;
 }
 
-#kill all vlcs on exit
 $SIG{INT} = sub {
     my $player = Playout::getPlayer();
-    $player->exit() if defined $player;
+    $player->exit() if $player;
     unlink $pidFile if -e $pidFile;
     exit;
 };
