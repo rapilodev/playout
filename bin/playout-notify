@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Config::General;
+use DateTime;
+
+my %config = Config::General->new('/etc/playout/notify')->getall;
+foreach my $key (qw(git_repo command)) {
+    die "Missing required config value: $key" unless exists $config{$key};
+}
+foreach my $key (qw(from to subject)) {
+    die "Missing required email config value: $key" unless exists $config{email}{$key};
+}
+
+my ($git_repo, $command) = @config{qw(git_repo command)};
+my $email = $config{email};
+
+unless (-d $git_repo) {
+    mkdir $git_repo or die "Failed to create repo dir: $!";
+}
+
+my @git = ("git", "-C", $git_repo);
+unless (-d "$git_repo/.git") {
+    system(@git, qw(init)) == 0 or die "Git init failed: $!";
+    system(@git, qw(config user.name), "playout-notify") == 0 or die "Git config name failed: $!";
+    system(@git, qw(config user.email), 'playout@localhost') == 0 or die "Git config email failed: $!";
+}
+
+my $file = "$git_repo/schedule.txt";
+unlink $file;
+system("$command > $file") == 0 or die "Command failed: $!";
+exit unless -s $file;
+
+system(@git, qw(add), $file) == 0 or die "Git add failed: $!";
+exit if system(@git, qw(diff --cached --quiet)) == 0;
+
+my $commit_message = "Update at " . DateTime->now->strftime("%Y-%m-%d %H:%M:%S");
+system(@git, qw(commit -m), $commit_message) == 0 or die "Git commit failed: $!";
+my $log = qx{git -C $git_repo log -U0 -p -1 --pretty=mbox};
+$log =~ s/^From .*/From: $email->{from}/m;
+$log =~ s/^Subject: .*/Subject: $email->{subject}/m;
+
+open my $mail, "|/usr/sbin/sendmail -t" or die "Mail error: $!\n";
+print $mail "To: $email->{to}\n$log";
+close $mail;
+
+__END__
