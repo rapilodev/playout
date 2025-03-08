@@ -1,3 +1,7 @@
+playout (0.30~noble) noble; urgency=medium
+  * playout-notify: playout-notify: ignore outdated entries
+ -- Milan Chrobok <mc@radiopiloten.de>  Sat, 08 Mar 2025 17:23:27 +0200
+
 playout (0.29~noble) noble; urgency=medium
   * add playout-notify to send mails if schedule changes
  -- Milan Chrobok <mc@radiopiloten.de>  Sat, 08 Mar 2025 12:23:27 +0200
