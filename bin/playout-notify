@@ -5,6 +5,24 @@ use warnings;
 use Config::General;
 use DateTime;
 
+sub ignore_outdated {
+    my ($content) = @_;
+    my $today = DateTime->now->ymd('-');
+    my $include = 0;
+    my (@filtered, @entry);
+    for my $line (split /\n/, $content) {
+        my ($entry_date) = $line =~ m/^[\+\-]\s*(\d{4}-\d{2}-\d{2})/;
+        if ($entry_date) {
+            push @filtered, @entry if $include; # add previous lines
+            $include = ($entry_date ge $today) ? 1 : 0;
+            @entry = (); # reset entry
+        }
+        push @entry, $line;
+    }
+    push @filtered, @entry if $include;
+    return join("\n", @filtered);
+}
+
 my %config = Config::General->new('/etc/playout/notify')->getall;
 foreach my $key (qw(git_repo command)) {
     die "Missing required config value: $key" unless exists $config{$key};
@@ -37,12 +55,19 @@ exit if system(@git, qw(diff --cached --quiet)) == 0;
 
 my $commit_message = "Update at " . DateTime->now->strftime("%Y-%m-%d %H:%M:%S");
 system(@git, qw(commit -m), $commit_message) == 0 or die "Git commit failed: $!";
+
 my $log = qx{git -C $git_repo log -U0 -p -1 --pretty=mbox};
-$log =~ s/^From .*/From: $email->{from}/m;
-$log =~ s/^Subject: .*/Subject: $email->{subject}/m;
+my ($header, $content) = split(/\n\n/, $log, 2);
+$header =~ s/^From: .*//mg;
+$header =~ s/^Subject: .*//mg;
+$header =~ s/\n+/\n/g;
+$log = join( "\n",
+    "From: $email->{from}",
+    "Subject: $email->{subject}",
+    "$header\n\n"
+) . ignore_outdated($content);
+exit unless $log =~ /\d\d\d\d\-\d\d\-\d\d/;
 
 open my $mail, "|/usr/sbin/sendmail -t" or die "Mail error: $!\n";
 print $mail "To: $email->{to}\n$log";
 close $mail;
-
-__END__
