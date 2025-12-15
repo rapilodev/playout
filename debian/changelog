@@ -1,3 +1,7 @@
+playout (0.31~noble) noble; urgency=medium
+  * playout-sync-lite: sync 1 year instead of 3 months
+ -- Milan Chrobok <mc@radiopiloten.de>  Sat, 15 Dec 2025 00:00:00 +0200
+
 playout (0.30~noble) noble; urgency=medium
   * playout-notify: playout-notify: ignore outdated entries
  -- Milan Chrobok <mc@radiopiloten.de>  Sat, 08 Mar 2025 17:23:27 +0200
