@@ -1,3 +1,11 @@
+playout (0.33~noble) noble; urgency=medium
+  * playout-lite: remove liquidsoap fail
+ -- Milan Chrobok <mc@radiopiloten.de>  Sat, 15 Dec 2025 00:00:00 +0200
+
+playout (0.32~noble) noble; urgency=medium
+  * playout: add man
+ -- Milan Chrobok <mc@radiopiloten.de>  Sat, 15 Dec 2025 00:00:00 +0200
+
 playout (0.31~noble) noble; urgency=medium
   * playout-sync-lite: sync 1 year instead of 3 months
  -- Milan Chrobok <mc@radiopiloten.de>  Sat, 15 Dec 2025 00:00:00 +0200
