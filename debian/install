@@ -22,3 +22,4 @@ lib/Playout/Time.pm /usr/share/perl5/Playout
 lib/Playout/Upload.pm /usr/share/perl5/Playout
 usr/share/playout/peak.wav /usr/share/playout
 debian/man/playout-notify.1 usr/share/man/man1/
+debian/man/playout.1 usr/share/man/man1/
