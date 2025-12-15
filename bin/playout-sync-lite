@@ -38,7 +38,7 @@ sub sync {
 
     # get audio files from server
     my $from = DateTime->now()->subtract( days => 1 )->ymd;
-    my $till = DateTime->now()->add( months => 3 )->ymd;
+    my $till = DateTime->now()->add( months => 12 )->ymd;
     execute( [ "playout-sync", "--config", "$config_file", "--from", $from, "--till", $till ] );
 
     # scan files and upload playout entries
